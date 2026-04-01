@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>减数分裂交互实验</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;background:#f0f4f8;color:#0f172a;}
+.page{max-width:1400px;margin:0 auto;padding:16px 12px 60px;}
+h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-height:1.3;}
+/* Tabs */
+.tab-nav{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:2px solid #cbd5e1;margin-bottom:16px;scrollbar-width:none;}
+.tab-nav::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;padding:10px 18px;font-size:14px;font-weight:600;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;color:#64748b;white-space:nowrap;}
+.tab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
+/* Tab panes */
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+/* Card */
+.card{background:#fff;border-radius:20px;box-shadow:0 6px 24px rgba(15,23,42,.08);padding:clamp(12px,3vw,28px);}
+.card-title{font-size:clamp(13px,2.8vw,18px);font-weight:700;margin-bottom:16px;}
+/* Diagram scroll wrapper */
+.diagram-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;}
+.diagram-scroll > div{display:flex;align-items:center;gap:12px;width:100%;min-width:0;}
+/* Cell */
+.cell{border:4px solid #000;border-radius:9999px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;transition:border-color .2s,box-shadow .2s;}
+.cell-xl{width:180px;height:180px;}
+.cell-lg{width:150px;height:150px;}
+.cell-md{width:120px;height:120px;}
+.cell-sm{width: 90px;height: 90px;}
+.cell.drop-active{border-color:#0ea5e9!important;box-shadow:0 0 0 4px rgba(14,165,233,.2);}
+.cell.correct{border-color:#22c55e!important;animation:pop .35s;}
+.cell.wrong{border-color:#ef4444!important;animation:shake .35s;}
+@keyframes pop{0%{transform:scale(.88)}55%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* Cell inner — scale content to fit */
+.cell-inner{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;width:100%;height:100%;padding:8px 6px;overflow:hidden;}
+/* Labels */
+.cell-label{font-size:clamp(11px,1.8vw,14px);font-weight:700;text-align:center;line-height:1.3;}
+/* Q-marks */
+.q-mark{font-size:60px;font-weight:800;color:#0ea5e9;user-select:none;line-height:1;}
+.q-mark-md{font-size:40px;font-weight:800;color:#0ea5e9;user-select:none;line-height:1;}
+.q-mark-sm{font-size:26px;font-weight:800;color:#0ea5e9;user-select:none;line-height:1;}
+/* Arrow */
+.arr{font-size:clamp(24px,4vw,44px);color:#334155;flex-shrink:0;user-select:none;line-height:1;}
+.arr-label{font-size:clamp(10px,1.8vw,13px);color:#334155;font-weight:700;text-align:center;}
+/* Chromosome CSS bars */
+.chromosome{display:inline-flex;align-items:center;justify-content:center;cursor:grab;user-select:none;}
+.chromosome.static{cursor:default;}
+.chromosome.dragging{opacity:.3;}
+.chr-body{border-radius:3px;position:relative;}
+.chr-body.blue{background:#1ea7d8;border:1.5px solid #0f6f94;}
+.chr-body.orange{background:#f97316;border:1.5px solid #c2460b;}
+.chr-body.long{width:10px;height:68px;}
+.chr-body.short{width:10px;height:42px;}
+.chr-body.long-sm{width:8px;height:52px;}
+.chr-body.short-sm{width:8px;height:32px;}
+.chr-body.long-xs{width:6px;height:38px;}
+.chr-body.short-xs{width:6px;height:24px;}
+.centromere{width:10px;height:10px;border-radius:50%;background:#fff;border:1.5px solid #64748b;position:absolute;left:50%;transform:translateX(-50%);}
+.chr-body.long .centromere{top:28px;}
+.chr-body.short .centromere{top:16px;}
+.chr-body.long-sm .centromere{width:8px;height:8px;top:20px;}
+.chr-body.short-sm .centromere{width:8px;height:8px;top:11px;}
+.chr-body.long-xs .centromere{width:6px;height:6px;top:15px;}
+.chr-body.short-xs .centromere{width:6px;height:6px;top:7px;}
+/* Pool */
+.pool{border:2px dashed #cbd5e1;border-radius:16px;background:#f8fafc;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px;min-height:64px;align-items:center;transition:border-color .2s;}
+.pool.drop-active{border-color:#0ea5e9;background:#f0f9ff;}
+.pool-slot{background:#f1f5f9;border-radius:10px;padding:6px 8px;display:flex;align-items:center;justify-content:center;}
+/* Dots */
+.dots{display:flex;gap:4px;}
+.dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1;}
+.dot.on{background:#0ea5e9;}
+/* Feedback */
+.feedback{display:none;margin-top:12px;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.6;}
+.feedback.show{display:block;}
+.feedback.success{background:#f0fdf4;border:1.5px solid #86efac;color:#166534;}
+.feedback.error{background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;}
+.feedback.hint{background:#f0f9ff;border:1.5px solid #7dd3fc;color:#075985;}
+/* Actions */
+.actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;}
+.btn{border-radius:14px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #cbd5e1;background:#fff;color:#0f172a;}
+.btn-primary{background:#0ea5e9;color:#fff;border-color:#0ea5e9;}
+/* Col helper */
+.col{display:flex;flex-direction:column;align-items:center;gap:6px;}
+/* Pool title */
+.pool-section-title{font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;}
+.helper-note{margin-top:10px;font-size:12px;line-height:1.6;color:#475569;text-align:center;}
+/* Inquiry 1 stage */
+.diagram-scroll > .q1-layout{display:flex;flex-direction:column;align-items:stretch;gap:16px;min-width:0;width:100%;}
+.q1-stage{
+  position:relative;
+  min-height:320px;
+  border-radius:24px;
+  border:2px dashed #cbd5e1;
+  background:
+    radial-gradient(circle at top right, rgba(14,165,233,.12), transparent 34%),
+    linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  overflow:hidden;
+  padding:28px 28px 24px;
+}
+.q1-stage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(148,163,184,.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,.12) 1px, transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;
+}
+.q1-stage-main{
+  position:relative;
+  z-index:1;
+  min-height:240px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:28px;
+}
+.q1-stage-main .cell{box-shadow:0 10px 26px rgba(15,23,42,.08);}
+.q1-pool-wrap{
+  border:2px dashed #cbd5e1;
+  border-radius:18px;
+  background:#f8fafc;
+  padding:14px 14px 12px;
+}
+.q1-picked-item{
+  position:relative;
+  display:inline-flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  padding:10px 8px 0 0;
+}
+.q1-picked-item .chromosome{cursor:default;}
+.q1-remove{
+  position:absolute;
+  top:0;
+  right:0;
+  width:20px;
+  height:20px;
+  border:none;
+  border-radius:999px;
+  background:#0f172a;
+  color:#fff;
+  font-size:13px;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(15,23,42,.18);
+}
+/* Inquiry 2 free-build stage */
+.diagram-scroll > .q2-layout{display:flex;flex-direction:column;align-items:stretch;gap:16px;min-width:0;width:100%;}
+.q2-stage{position:relative;min-height:500px;border-radius:24px;border:2px dashed #cbd5e1;background:
+  radial-gradient(circle at top right, rgba(14,165,233,.12), transparent 34%),
+  linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  overflow:hidden;
+}
+.q2-stage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(148,163,184,.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,.12) 1px, transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;
+}
+.q2-stage.is-drop-target{box-shadow:inset 0 0 0 4px rgba(14,165,233,.22);}
+.q2-origin-card{
+  position:absolute;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  width:176px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  z-index:1;
+}
+.q2-origin-cell{
+  width:152px;
+  height:152px;
+  box-shadow:0 10px 26px rgba(15,23,42,.08);
+}
+.q2-stage-layer{position:absolute;inset:0;z-index:2;}
+.q2-palette-wrap{
+  border:2px dashed #cbd5e1;
+  border-radius:18px;
+  background:#f8fafc;
+  padding:14px 14px 12px;
+}
+.q2-palette-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));
+  gap:10px;
+}
+.q2-palette-item{
+  border:none;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 4px 14px rgba(15,23,42,.06);
+  padding:10px 8px 8px;
+  min-height:108px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.q2-palette-item:hover{background:#f0f9ff;box-shadow:0 8px 18px rgba(14,165,233,.14);}
+.q2-palette-item:active{cursor:grabbing;}
+.q2-stage-item{
+  position:absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.q2-stage-item:active{cursor:grabbing;}
+.q2-stage-remove{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  width:22px;
+  height:22px;
+  border:none;
+  border-radius:999px;
+  background:#0f172a;
+  color:#fff;
+  font-size:14px;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(15,23,42,.2);
+}
+.q2-piece{display:flex;align-items:center;justify-content:center;width:100%;height:100%;pointer-events:none;}
+.q2-piece-cell{
+  width:88px;
+  height:88px;
+  border:3px solid #111827;
+  border-radius:50%;
+  background:#fff;
+}
+.q2-piece-arrow{
+  font-size:42px;
+  font-weight:700;
+  color:#111827;
+  line-height:1;
+}
+.q2-piece-palette .q2-piece-cell{width:68px;height:68px;border-width:3px;}
+.q2-piece-palette .q2-piece-arrow{font-size:34px;}
+.q2-drag-ghost{
+  position:fixed;
+  left:0;
+  top:0;
+  pointer-events:none;
+  z-index:9999;
+  opacity:.88;
+  filter:drop-shadow(0 10px 18px rgba(15,23,42,.18));
+}
+/* Inquiry 3 full-flow matching mode */
+.q3-layout{display:flex;flex-direction:column;gap:18px;}
+.q3-flow-wrap,
+.q3-palette-wrap{
+  border:2px dashed #cbd5e1;
+  border-radius:22px;
+  padding:14px;
+}
+.q3-flow-wrap{background:#fff;}
+.q3-palette-wrap{
+  background:
+    radial-gradient(circle at top right, rgba(14,165,233,.12), transparent 34%),
+    linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+}
+.q3-stage-fit{
+  position:relative;
+  width:100%;
+  max-width:1320px;
+  height:620px;
+  margin:0 auto;
+}
+.q3-stage-fit > .q3-stage{
+  position:absolute;
+  left:0;
+  top:0;
+}
+.q3-stage{
+  position:relative;
+  width:1320px;
+  height:620px;
+  border-radius:24px;
+  background:#fff;
+  overflow:hidden;
+  transform-origin:top left;
+}
+.q3-stage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(148,163,184,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,.10) 1px, transparent 1px);
+  background-size:24px 24px;
+  pointer-events:none;
+}
+.q3-stage-svg,
+.q3-stage-annos,
+.q3-stage-layer{
+  position:absolute;
+  inset:0;
+}
+.q3-stage-svg{z-index:1;}
+.q3-stage-annos{
+  pointer-events:none;
+  z-index:2;
+}
+.q3-stage-layer{z-index:3;}
+.q3-stage-slot{
+  position:absolute;
+  border:3px solid #111827;
+  border-radius:50%;
+  background:rgba(255,255,255,.96);
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:none;
+  transition:border-color .2s, box-shadow .2s, transform .2s, background .2s;
+}
+.q3-stage-slot.can-drop{
+  border-color:#0ea5e9;
+  box-shadow:0 0 0 4px rgba(14,165,233,.18);
+  transform:scale(1.03);
+}
+.q3-stage-slot.filled{background:rgba(255,255,255,.985);}
+.q3-stage-slot.correct{
+  border-color:#22c55e;
+  box-shadow:0 0 0 4px rgba(34,197,94,.16);
+}
+.q3-stage-slot.wrong{
+  border-color:#ef4444;
+  box-shadow:0 0 0 4px rgba(239,68,68,.14);
+}
+.q3-slot-tip,
+.q3-palette-note{
+  margin-top:10px;
+  font-size:12px;
+  line-height:1.6;
+  color:#475569;
+}
+.q3-pool{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(96px, 1fr));
+  gap:14px 12px;
+  min-width:0;
+  align-items:end;
+  justify-items:center;
+}
+.q3-pool-item{
+  border:none;
+  background:none;
+  padding:0;
+  cursor:grab;
+  user-select:none;
+}
+.q3-pool-item.dragging{opacity:.35;}
+.q3-visual{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:0;
+}
+.q3-visual-pool .q3-visual-img{
+  width:100%;
+  height:100%;
+}
+.q3-visual-stage .q3-visual-img{
+  width:138%;
+  height:138%;
+}
+.q3-visual-img{
+  display:block;
+  object-fit:contain;
+  pointer-events:none;
+}
+.q3-visual-pool.q3-visual-sperm .q3-visual-img{
+  width:128%;
+  height:128%;
+  transform:translateX(-3%);
+}
+.q3-visual-stage.q3-visual-sperm .q3-visual-img{
+  width:170%;
+  height:170%;
+  transform:translateX(-6%);
+}
+.q3-visual-canvas{
+  position:absolute;
+  left:0;
+  top:0;
+  width:120px;
+  height:120px;
+  transform-origin:top left;
+}
+.q3-visual-cell{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:radial-gradient(circle at 36% 32%, #ffffff 0%, #eef5ff 38%, #d9e7fb 78%, #ffffff 100%);
+  border:2px solid #d0dced;
+  box-shadow:inset 0 0 18px rgba(147,172,220,.28);
+  overflow:hidden;
+}
+.q3-visual-cell.cleavage::before{
+  content:"";
+  position:absolute;
+  left:18px;
+  top:28px;
+  width:84px;
+  height:64px;
+  border:4px solid rgba(156,170,194,.58);
+  border-radius:48px;
+  box-sizing:border-box;
+}
+.q3-spindle-line{
+  position:absolute;
+  top:12px;
+  bottom:12px;
+  width:2px;
+  background:rgba(152,173,211,.26);
+  border-radius:999px;
+}
+.q3-spindle-line.l1{left:32px;}
+.q3-spindle-line.l2{left:59px;}
+.q3-spindle-line.l3{left:86px;}
+.q3-spindle-pole{
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:rgba(150,171,208,.34);
+  left:57px;
+}
+.q3-spindle-pole.top{top:8px;}
+.q3-spindle-pole.bottom{bottom:8px;}
+.q3-cell-nucleus{
+  position:absolute;
+  left:22px;
+  top:22px;
+  width:76px;
+  height:76px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fffafa 0%, #ffd8d4 42%, #f2bbb7 82%, #ffd8d4 100%);
+  border:2px solid #e4b4b3;
+  overflow:hidden;
+}
+.q3-stage-chr{
+  position:absolute;
+  transform-origin:center center;
+}
+.q3-stage-anno{
+  position:absolute;
+  color:#0f172a;
+  font-weight:700;
+  line-height:1.18;
+  white-space:nowrap;
+  text-shadow:none;
+}
+.q3-stage-anno.center{text-align:center;}
+.q3-stage-anno.small{font-size:12px;}
+.q3-stage-anno.mid{font-size:15px;}
+.q3-stage-anno.big{font-size:17px;}
+.q3-stage-anno.group{
+  color:#0369a1;
+  font-weight:800;
+  letter-spacing:.05em;
+}
+.q3-stage-anno.process{color:#0284c7;}
+.q3-stage-anno.soft{color:#111827;}
+.q3-stage-anno.tag{
+  padding:0;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+}
+.q3-stage-anno.vertical{
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  letter-spacing:.08em;
+}
+.q3-stage-bracket-h,
+.q3-stage-bracket-v,
+.q3-stage-down{
+  position:absolute;
+  box-sizing:border-box;
+}
+.q3-stage-bracket-h{
+  height:14px;
+  border-left:2px solid #111827;
+  border-right:2px solid #111827;
+  border-bottom:2px solid #111827;
+}
+.q3-stage-bracket-v{
+  width:14px;
+  border-top:2px solid #111827;
+  border-bottom:2px solid #111827;
+  border-left:2px solid #111827;
+}
+.q3-stage-down{
+  width:2px;
+  background:#111827;
+}
+.q3-stage-down::after{
+  content:"";
+  position:absolute;
+  left:-4px;
+  bottom:-2px;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-top:10px solid #111827;
+}
+/* Responsive override for very small screens */
+@media(max-width:480px){
+  .cell-xl{width:150px;height:150px;}
+  .cell-lg{width:124px;height:124px;}
+  .cell-md{width:100px;height:100px;}
+  .cell-sm{width: 76px;height: 76px;}
+  .cell{border-width:3px;}
+  .q-mark{font-size:46px;}
+  .q-mark-md{font-size:30px;}
+  .q-mark-sm{font-size:20px;}
+  .q1-stage{min-height:280px;padding:20px 20px 18px;}
+  .q1-stage-main{gap:20px;}
+  .q2-stage{min-height:460px;}
+  .q2-origin-card{left:12px;width:140px;}
+  .q2-origin-cell{width:120px;height:120px;}
+}
+@media(max-width:860px){
+  .q1-stage-main{
+    flex-direction:column;
+    min-height:auto;
+    gap:18px;
+  }
+  .q1-stage-main > .col:nth-child(2) .arr{transform:rotate(90deg);}
+}
+@media(max-width:760px){
+  .q2-stage{
+    min-height:540px;
+  }
+  .q2-origin-card{
+    left:12px;
+    width:148px;
+  }
+  .q2-origin-cell{
+    width:128px;
+    height:128px;
+  }
+  .q2-palette-grid{
+    grid-template-columns:repeat(auto-fit, minmax(92px, 1fr));
+  }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>《建立减数分裂中染色体变化模型》交互实验</h1>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab(0)">模型一</button>
+  <button class="tab-btn" onclick="switchTab(1)">模型二</button>
+  <button class="tab-btn" onclick="switchTab(2)">模型三</button>
+</div>
+
+<!-- ══ 探究一 ══ -->
+<div class="tab-pane active" id="tab0">
+  <div class="card">
+    <div class="card-title">精子的染色体数目如何减半</div>
+    <div class="diagram-scroll">
+      <div class="q1-layout">
+        <div class="q1-stage">
+          <div class="q1-stage-main">
+            <div class="col">
+              <div class="cell-label">精原细胞</div>
+              <div class="cell cell-xl"><div class="cell-inner" id="q1-src"></div></div>
+            </div>
+            <div class="col">
+              <div class="arr-label">&nbsp;</div>
+              <div class="arr">→</div>
+            </div>
+            <div class="col">
+              <div class="cell-label">精子</div>
+              <div class="cell cell-xl" id="q1-target"><div class="cell-inner" id="q1-t-inner"><div class="q-mark">?</div></div></div>
+              <div class="dots" id="q1-dots"></div>
+            </div>
+          </div>
+        </div>
+        <div class="q1-pool-wrap">
+          <div class="pool" id="q1-pool" style="justify-content:center;"></div>
+        </div>
+        <div class="helper-note">每次拖入都会生成一个新素材，不会消耗待选区中的原件。拖入的素材点右上角 × 可删除。</div>
+      </div>
+    </div>
+    <div class="actions"><button class="btn" onclick="q1Reset()">↺ 重置</button></div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+</div>
+
+<!-- ══ 探究二 ══ -->
+<div class="tab-pane" id="tab1">
+  <div class="card">
+    <div class="card-title">精子的染色体数目如何规律减半</div>
+    <div class="diagram-scroll">
+      <div class="q2-layout">
+        <div class="q2-stage" id="q2-stage">
+          <div class="q2-origin-card">
+            <div class="cell-label">精原细胞</div>
+            <div class="cell cell-xl q2-origin-cell">
+              <div id="q2-origin-inner" style="width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center;"></div>
+            </div>
+          </div>
+          <div class="q2-stage-layer" id="q2-stage-layer"></div>
+        </div>
+        <div class="q2-palette-wrap">
+          <div class="q2-palette-grid" id="q2-palette"></div>
+        </div>
+        <div class="helper-note">每次拖入都会生成一个新素材，不会消耗待选区中的原件。拖入的素材点右上角 × 可删除。</div>
+      </div>
+    </div>
+    <div class="actions"><button class="btn" onclick="q2Reset()">↺ 重置</button></div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+</div>
+
+<!-- ══ 探究三 ══ -->
+<div class="tab-pane" id="tab2">
+  <div class="card">
+    <div class="card-title">哺乳动物精子的形成过程</div>
+    <div class="q3-layout">
+      <div class="q3-flow-wrap">
+        <div class="diagram-scroll">
+          <div class="q3-stage-fit" id="q3-stage-fit">
+            <div class="q3-stage" id="q3-stage">
+              <svg class="q3-stage-svg" id="q3-stage-svg"></svg>
+              <div class="q3-stage-annos" id="q3-stage-annos"></div>
+              <div class="q3-stage-layer" id="q3-stage-layer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="q3-palette-wrap">
+        <div class="diagram-scroll">
+          <div class="q3-pool" id="q3-pool"></div>
+        </div>
+        <div class="q3-palette-note">将细胞或精子拖入对应空位，已放入的素材可点击退回。</div>
+      </div>
+    </div>
+    <div class="actions"><button class="btn" onclick="q3Reset()">↺ 重置</button></div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+<script>
+
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const BASE = [
+  { id:'L1', pair:1, size:'long',  color:'blue'   },
+  { id:'L2', pair:1, size:'long',  color:'blue'   },
+  { id:'S1', pair:2, size:'short', color:'blue'   },
+  { id:'S2', pair:2, size:'short', color:'blue'   },
+];
+
+const REPS = [
+  { id:'L1a', pair:1, size:'long',  color:'blue',   sister:'L1' },
+  { id:'L1b', pair:1, size:'long',  color:'blue',   sister:'L1' },
+  { id:'L2a', pair:1, size:'long',  color:'blue',   sister:'L2' },
+  { id:'L2b', pair:1, size:'long',  color:'blue',   sister:'L2' },
+  { id:'S1a', pair:2, size:'short', color:'orange', sister:'S1' },
+  { id:'S1b', pair:2, size:'short', color:'orange', sister:'S1' },
+  { id:'S2a', pair:2, size:'short', color:'orange', sister:'S2' },
+  { id:'S2b', pair:2, size:'short', color:'orange', sister:'S2' },
+];
+
+// ── helpers ──
+function chr(data, small, draggable=true) {
+  const el = document.createElement('div');
+  el.className = 'chromosome' + (draggable ? '' : ' static');
+  el.draggable = draggable;
+  el.dataset.id = data.id;
+  const sizeKey = small
+    ? (data.size==='long' ? 'long-sm' : 'short-sm')
+    : data.size;
+  const body = document.createElement('div');
+  body.className = `chr-body ${sizeKey} ${data.color}`;
+  const cm = document.createElement('div');
+  cm.className = 'centromere';
+  body.appendChild(cm);
+  el.appendChild(body);
+  if (draggable) {
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', data.id);
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  }
+  return el;
+}
+
+function chrXS(data, draggable=true) {
+  const el = document.createElement('div');
+  el.className = 'chromosome' + (draggable ? '' : ' static');
+  el.draggable = draggable;
+  el.dataset.id = data.id;
+  const sizeKey = data.size==='long' ? 'long-xs' : 'short-xs';
+  const body = document.createElement('div');
+  body.className = `chr-body ${sizeKey} ${data.color}`;
+  const cm = document.createElement('div');
+  cm.className = 'centromere';
+  body.appendChild(cm);
+  el.appendChild(body);
+  if (draggable) {
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', data.id);
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  }
+  return el;
+}
+
+function setFB(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `feedback ${type} show`;
+  el.innerHTML = msg;
+}
+function clrFB(id) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'feedback';
+}
+function popCorrect(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('correct');
+  setTimeout(() => el.classList.remove('correct'), 650);
+}
+function popWrong(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('wrong');
+  setTimeout(() => el.classList.remove('wrong'), 450);
+}
+
+function makeDots(containerId, total, filled) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = '';
+  for (let i=0;i<total;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i<filled?' on':'');
+    c.appendChild(d);
+  }
+}
+
+function makePool(pool, chrs, placed, small, onDrop) {
+  pool.innerHTML = '';
+  chrs.filter(c => !placed.includes(c.id)).forEach(c => {
+    const s = document.createElement('div');
+    s.className = 'pool-slot';
+    s.appendChild(small ? chr(c, true) : chr(c, false));
+    pool.appendChild(s);
+  });
+  pool.addEventListener('dragover', e => e.preventDefault());
+  pool.addEventListener('drop', e => {
+    e.preventDefault();
+    onDrop(e.dataTransfer.getData('text/plain'));
+  });
+}
+
+function makeDropCell(cellId, onDrop) {
+  const el = document.getElementById(cellId);
+  if (!el) return;
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drop-active'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drop-active'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drop-active');
+    onDrop(e.dataTransfer.getData('text/plain'));
+  });
+}
+
+function renderInner(innerId, placed, allChrs, qMark, small) {
+  const inner = document.getElementById(innerId);
+  if (!inner) return;
+  inner.innerHTML = '';
+  if (placed.length === 0) {
+    const q = document.createElement('div');
+    q.className = qMark || 'q-mark';
+    q.textContent = '?';
+    inner.appendChild(q);
+  } else {
+    placed.forEach(id => {
+      const c = allChrs.find(x => x.id===id);
+      if (c) inner.appendChild(small ? chr(c, true) : chr(c, false));
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TAB
+// ═══════════════════════════════════════════════════
+function switchTab(i) {
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',i===j));
+  document.querySelectorAll('.tab-pane').forEach((p,j)=>p.classList.toggle('active',i===j));
+  if (i === 2) requestAnimationFrame(q3FitStage);
+}
+
+// ═══════════════════════════════════════════════════
+// INQUIRY 1
+// ═══════════════════════════════════════════════════
+let q1P = [];
+
+function q1Build() {
+  const src = document.getElementById('q1-src');
+  src.innerHTML = '';
+  BASE.forEach(c => src.appendChild(chr(c, false, false))); // q1src uses CSS chr
+
+  q1P = [];
+  q1Render();
+
+  const q1target = document.getElementById('q1-target');
+  q1target.ondragover = e => { e.preventDefault(); q1target.classList.add('drop-active'); };
+  q1target.ondragleave = () => q1target.classList.remove('drop-active');
+  q1target.ondrop = e => {
+    e.preventDefault(); q1target.classList.remove('drop-active');
+    const id = e.dataTransfer.getData('text/plain');
+    if (!id) return;
+    q1P.push(id); clrFB('q1-fb'); q1Render();
+  };
+}
+
+function q1Render() {
+  const inner = document.getElementById('q1-t-inner');
+  inner.innerHTML = '';
+  if (q1P.length === 0) {
+    const q = document.createElement('div'); q.className = 'q-mark'; q.textContent = '?';
+    inner.appendChild(q);
+  } else {
+    q1P.forEach((id, idx) => {
+      const c = BASE.find(x => x.id === id);
+      if (!c) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'q1-picked-item';
+      const el = chr(c, false, false);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'q1-remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', '删除染色体');
+      remove.addEventListener('click', e => {
+        e.stopPropagation();
+        q1P.splice(idx, 1);
+        q1Render();
+      });
+      wrap.appendChild(el);
+      wrap.appendChild(remove);
+      inner.appendChild(wrap);
+    });
+  }
+
+  const pool = document.getElementById('q1-pool');
+  pool.innerHTML = '';
+  // Always show all 4 chromosomes in pool
+  BASE.forEach(c => {
+    const s = document.createElement('div');
+    s.className = 'pool-slot';
+    s.appendChild(chr(c, false));
+    pool.appendChild(s);
+  });
+  makeDots('q1-dots', 2, Math.min(q1P.length, 2));
+}
+
+function q1Check() {
+  if (q1P.length < 2) { setFB('q1-fb','⚠️ 请先拖入2条染色体。','hint'); return; }
+  const hasLong  = q1P.some(id=>BASE.find(c=>c.id===id).size==='long');
+  const hasShort = q1P.some(id=>BASE.find(c=>c.id===id).size==='short');
+  if (hasLong && hasShort) {
+    popCorrect('q1-target');
+    setFB('q1-fb',
+      '🎉 <strong>正确！</strong>精子含 <strong>1条长（pair1）+ 1条短（pair2）</strong>，共2条（n=2）。<br>'+
+      '这是因为减数第一次分裂时，<strong>同源染色体分离</strong>，每对中各取一条分配到子代细胞。<br>'+
+      '👉 接下来在“模型二”中，我们来探究：为什么分裂前必须先复制DNA？','success');
+  } else {
+    popWrong('q1-target');
+    setFB('q1-fb','❌ 两条染色体类型相同。减数分裂后，同源染色体（同对）会分离到不同精子，请重新选择。','error');
+  }
+}
+function q1Hint() {
+  setFB('q1-fb','💡 L1和L2是同源对（同样长，互为同源）；S1和S2是同源对（同样短）。同源对的两条在减数第一次分裂时分到不同细胞，所以精子只能有一长一短。','hint');
+}
+function q1Reset() { q1P=[]; clrFB('q1-fb'); q1Render(); }
+
+// ═══════════════════════════════════════════════════
+// INQUIRY 2  — free-build stage: only the original cell is fixed
+// ═══════════════════════════════════════════════════
+
+// SVG primitive helpers
+function svgRect(x, y, w, h, r, fill, stroke, sw) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  el.setAttribute('x', x); el.setAttribute('y', y);
+  el.setAttribute('width', w); el.setAttribute('height', h);
+  el.setAttribute('rx', r); el.setAttribute('fill', fill);
+  el.setAttribute('stroke', stroke); el.setAttribute('stroke-width', sw);
+  return el;
+}
+function svgCircle(cx, cy, r, fill, stroke, sw) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  el.setAttribute('cx', cx); el.setAttribute('cy', cy); el.setAttribute('r', r);
+  el.setAttribute('fill', fill); el.setAttribute('stroke', stroke); el.setAttribute('stroke-width', sw);
+  return el;
+}
+function svgLine(x1, y1, x2, y2, sw, stroke) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  el.setAttribute('x1', x1); el.setAttribute('y1', y1);
+  el.setAttribute('x2', x2); el.setAttribute('y2', y2);
+  el.setAttribute('stroke-width', sw); el.setAttribute('stroke', stroke);
+  el.setAttribute('stroke-linecap', 'round');
+  return el;
+}
+function makeSVG(w, h) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('width', w); s.setAttribute('height', h);
+  s.style.display = 'block'; s.style.overflow = 'visible';
+  return s;
+}
+
+// Single straight chromosome bar (pool & result cells)
+function chrBarSVG(data, size) {
+  const isLong = data.size === 'long';
+  const h = size==='xs' ? (isLong?38:24)
+          : size==='sm' ? (isLong?52:32)
+          : size==='md' ? (isLong?68:42)
+          : size==='lg' ? (isLong?80:50)
+          :               (isLong?68:42);
+  const w = size==='xs' ? 8 : size==='sm' ? 10 : 12;
+  const r = size==='xs' ? 3.5 : size==='sm' ? 4 : 5;
+  const s = makeSVG(w, h);
+  s.appendChild(svgRect(1, 1, w-2, h-2, 3, '#1ea7d8', '#0f6f94', 1.5));
+  s.appendChild(svgCircle(w/2, h*0.42, r, '#fff', '#64748b', 1.5));
+  return s;
+}
+
+// X-shape chromosome (replicated: 2 sister chromatids joined at centromere)
+function chrXSVG(data, size) {
+  const isLong = data.size === 'long';
+  const arm = size==='xs' ? (isLong?18:12) : size==='sm' ? (isLong?26:17) : (isLong?36:22);
+  const sp  = size==='xs' ? (isLong?5:4)   : size==='sm' ? (isLong?7:5)   : (isLong?9:6);
+  const W = sp*2 + 14, H = arm*2 + 8;
+  const cx = W/2, cy = H/2;
+  const thick = size==='xs' ? (isLong?5:4) : size==='sm' ? (isLong?6:5) : (isLong?7:6);
+  const s = makeSVG(W, H);
+  [[cx,cy,cx-sp,cy-arm],[cx,cy,cx+sp,cy-arm],[cx,cy,cx-sp,cy+arm],[cx,cy,cx+sp,cy+arm]]
+    .forEach(([x1,y1,x2,y2]) => {
+      s.appendChild(svgLine(x1,y1,x2,y2,thick+2,'#0f6f94'));
+      s.appendChild(svgLine(x1,y1,x2,y2,thick,'#1ea7d8'));
+    });
+  s.appendChild(svgCircle(cx, cy, size==='xs'?3:(isLong?5:4), '#fff', '#64748b', 1.5));
+  return s;
+}
+
+// Straight result-cell chromosome (same as pool but not draggable)
+function chrResultSVG(data) {
+  return chrBarSVG(data, 'lg');
+}
+
+const Q2_TEMPLATE_ITEMS = [
+  { type:'cell',     label:'细胞圆圈' },
+  { type:'arrow',    label:'箭头' },
+  { type:'xShort',   label:'短X形染色体' },
+  { type:'xLong',    label:'长X形染色体' },
+  { type:'barLong',  label:'长染色体' },
+  { type:'barShort', label:'短染色体' },
+];
+
+const Q2_ITEM_META = {
+  cell:     { width: 88, height: 88 },
+  arrow:    { width: 56, height: 34 },
+  xShort:   { width: 36, height: 48 },
+  xLong:    { width: 42, height: 68 },
+  barLong:  { width: 20, height: 66 },
+  barShort: { width: 20, height: 46 },
+};
+
+let q2Items = [];
+let q2NextId = 1;
+let q2ZCounter = 1;
+let q2DragState = null;
+let q2ResizeBound = false;
+
+function q2RenderOrigin() {
+  const origin = document.getElementById('q2-origin-inner');
+  if (!origin) return;
+  origin.innerHTML = '';
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 180 180');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '100%');
+
+  [
+    { cx:60,  cy:88, rot:0, isLong:true  },
+    { cx:84,  cy:88, rot:0, isLong:true  },
+    { cx:122, cy:88, rot:0, isLong:false },
+    { cx:142, cy:88, rot:0, isLong:false },
+  ].forEach(d => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', `rotate(${d.rot},${d.cx},${d.cy})`);
+
+    const w = 10;
+    const h = d.isLong ? 70 : 42;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', d.cx - w / 2);
+    rect.setAttribute('y', d.cy - h / 2);
+    rect.setAttribute('width', w);
+    rect.setAttribute('height', h);
+    rect.setAttribute('rx', '3');
+    rect.setAttribute('fill', '#1ea7d8');
+    rect.setAttribute('stroke', '#0f6f94');
+    rect.setAttribute('stroke-width', '1.5');
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', d.cx);
+    circle.setAttribute('cy', d.cy - h / 2 + h * 0.42);
+    circle.setAttribute('r', '5');
+    circle.setAttribute('fill', '#fff');
+    circle.setAttribute('stroke', '#64748b');
+    circle.setAttribute('stroke-width', '1.5');
+
+    g.appendChild(rect);
+    g.appendChild(circle);
+    svg.appendChild(g);
+  });
+
+  origin.appendChild(svg);
+}
+
+function q2CreatePiece(type, context='stage') {
+  const wrap = document.createElement('div');
+  wrap.className = 'q2-piece' + (context === 'palette' ? ' q2-piece-palette' : '');
+
+  if (type === 'cell') {
+    const circle = document.createElement('div');
+    circle.className = 'q2-piece-cell';
+    wrap.appendChild(circle);
+    return wrap;
+  }
+
+  if (type === 'arrow') {
+    const arrow = document.createElement('div');
+    arrow.className = 'q2-piece-arrow';
+    arrow.textContent = '→';
+    wrap.appendChild(arrow);
+    return wrap;
+  }
+
+  const size = context === 'palette' ? 'xs' : 'sm';
+  const barSize = context === 'palette' ? 'xs' : 'sm';
+
+  if (type === 'xLong')  { wrap.appendChild(chrXSVG({ size:'long'  }, size)); return wrap; }
+  if (type === 'xShort') { wrap.appendChild(chrXSVG({ size:'short' }, size)); return wrap; }
+  if (type === 'barLong'){ wrap.appendChild(chrBarSVG({ size:'long'  }, barSize)); return wrap; }
+  wrap.appendChild(chrBarSVG({ size:'short' }, barSize));
+  return wrap;
+}
+
+function q2RenderPalette() {
+  const palette = document.getElementById('q2-palette');
+  if (!palette) return;
+  palette.innerHTML = '';
+
+  Q2_TEMPLATE_ITEMS.forEach(template => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'q2-palette-item';
+    item.appendChild(q2CreatePiece(template.type, 'palette'));
+
+    item.addEventListener('pointerdown', e => q2StartPaletteDrag(e, template.type));
+    palette.appendChild(item);
+  });
+}
+
+function q2ClampPosition(x, y, type, widthOverride, heightOverride) {
+  const stage = document.getElementById('q2-stage');
+  const meta = Q2_ITEM_META[type];
+  if (!stage || !meta) return { x, y };
+
+  const width = widthOverride || meta.width;
+  const height = heightOverride || meta.height;
+  const maxX = Math.max(0, stage.clientWidth - width);
+  const maxY = Math.max(0, stage.clientHeight - height);
+
+  return {
+    x: Math.min(Math.max(0, x), maxX),
+    y: Math.min(Math.max(0, y), maxY),
+  };
+}
+
+function q2RenderStageItems() {
+  const layer = document.getElementById('q2-stage-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+
+  q2Items
+    .slice()
+    .sort((a, b) => a.z - b.z)
+    .forEach(item => {
+      const meta = Q2_ITEM_META[item.type];
+      if (!meta) return;
+
+      const el = document.createElement('div');
+      el.className = 'q2-stage-item';
+      el.dataset.id = item.id;
+      el.style.width = meta.width + 'px';
+      el.style.height = meta.height + 'px';
+      el.style.left = item.x + 'px';
+      el.style.top = item.y + 'px';
+      el.style.zIndex = item.z;
+
+      el.appendChild(q2CreatePiece(item.type, 'stage'));
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'q2-stage-remove';
+      remove.textContent = '×';
+      remove.addEventListener('pointerdown', e => e.stopPropagation());
+      remove.addEventListener('click', e => {
+        e.stopPropagation();
+        q2RemoveItem(item.id);
+      });
+      el.appendChild(remove);
+
+      el.addEventListener('pointerdown', e => q2StartMoveItem(e, item.id, el));
+      layer.appendChild(el);
+    });
+}
+
+function q2SetStageActive(active) {
+  const stage = document.getElementById('q2-stage');
+  if (stage) stage.classList.toggle('is-drop-target', !!active);
+}
+
+function q2PointInStage(clientX, clientY) {
+  const stage = document.getElementById('q2-stage');
+  if (!stage) return false;
+  const rect = stage.getBoundingClientRect();
+  return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+}
+
+function q2PositionGhost(clientX, clientY) {
+  if (!q2DragState || !q2DragState.ghost) return;
+  const x = clientX - q2DragState.width / 2;
+  const y = clientY - q2DragState.height / 2;
+  q2DragState.ghost.style.transform = `translate(${x}px, ${y}px)`;
+  q2SetStageActive(q2PointInStage(clientX, clientY));
+}
+
+function q2StartPaletteDrag(e, type) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  if (q2DragState) q2FinishDrag();
+
+  const meta = Q2_ITEM_META[type];
+  if (!meta) return;
+
+  const ghost = document.createElement('div');
+  ghost.className = 'q2-drag-ghost';
+  ghost.style.width = meta.width + 'px';
+  ghost.style.height = meta.height + 'px';
+  ghost.appendChild(q2CreatePiece(type, 'stage'));
+  document.body.appendChild(ghost);
+
+  q2DragState = {
+    mode: 'new',
+    type,
+    ghost,
+    width: meta.width,
+    height: meta.height,
+  };
+
+  q2PositionGhost(e.clientX, e.clientY);
+  document.addEventListener('pointermove', q2HandlePointerMove);
+  document.addEventListener('pointerup', q2HandlePointerUp);
+}
+
+function q2StartMoveItem(e, id, el) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  if (q2DragState) q2FinishDrag();
+
+  const item = q2Items.find(entry => entry.id === id);
+  if (!item) return;
+
+  const rect = el.getBoundingClientRect();
+  item.z = ++q2ZCounter;
+  el.style.zIndex = item.z;
+
+  q2DragState = {
+    mode: 'move',
+    id,
+    el,
+    width: rect.width,
+    height: rect.height,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+  };
+
+  document.addEventListener('pointermove', q2HandlePointerMove);
+  document.addEventListener('pointerup', q2HandlePointerUp);
+}
+
+function q2HandlePointerMove(e) {
+  if (!q2DragState) return;
+
+  if (q2DragState.mode === 'new') {
+    q2PositionGhost(e.clientX, e.clientY);
+    return;
+  }
+
+  const stage = document.getElementById('q2-stage');
+  const item = q2Items.find(entry => entry.id === q2DragState.id);
+  if (!stage || !item) return;
+
+  const rect = stage.getBoundingClientRect();
+  const pos = q2ClampPosition(
+    e.clientX - rect.left - q2DragState.offsetX,
+    e.clientY - rect.top - q2DragState.offsetY,
+    item.type,
+    q2DragState.width,
+    q2DragState.height
+  );
+
+  item.x = pos.x;
+  item.y = pos.y;
+  q2DragState.el.style.left = pos.x + 'px';
+  q2DragState.el.style.top = pos.y + 'px';
+}
+
+function q2HandlePointerUp(e) {
+  if (!q2DragState) return;
+
+  if (q2DragState.mode === 'new' && q2PointInStage(e.clientX, e.clientY)) {
+    q2AddItem(q2DragState.type, e.clientX, e.clientY);
+  }
+
+  q2FinishDrag();
+}
+
+function q2FinishDrag() {
+  if (q2DragState && q2DragState.ghost && q2DragState.ghost.parentNode) {
+    q2DragState.ghost.parentNode.removeChild(q2DragState.ghost);
+  }
+
+  q2DragState = null;
+  q2SetStageActive(false);
+  document.removeEventListener('pointermove', q2HandlePointerMove);
+  document.removeEventListener('pointerup', q2HandlePointerUp);
+}
+
+function q2AddItem(type, clientX, clientY) {
+  const stage = document.getElementById('q2-stage');
+  const meta = Q2_ITEM_META[type];
+  if (!stage || !meta) return;
+
+  const rect = stage.getBoundingClientRect();
+  const pos = q2ClampPosition(
+    clientX - rect.left - meta.width / 2,
+    clientY - rect.top - meta.height / 2,
+    type
+  );
+
+  q2Items.push({
+    id: 'q2-item-' + q2NextId++,
+    type,
+    x: pos.x,
+    y: pos.y,
+    z: ++q2ZCounter,
+  });
+
+  clrFB('q2-fb');
+  q2RenderStageItems();
+}
+
+function q2RemoveItem(id) {
+  q2Items = q2Items.filter(item => item.id !== id);
+  clrFB('q2-fb');
+  q2RenderStageItems();
+}
+
+function q2ClampAllItems() {
+  const stage = document.getElementById('q2-stage');
+  if (!stage || !stage.clientWidth || !stage.clientHeight) return;
+
+  q2Items.forEach(item => {
+    const pos = q2ClampPosition(item.x, item.y, item.type);
+    item.x = pos.x;
+    item.y = pos.y;
+  });
+
+  q2RenderStageItems();
+}
+
+function q2Build() {
+  q2FinishDrag();
+  q2Items = [];
+  q2NextId = 1;
+  q2ZCounter = 1;
+
+  q2RenderOrigin();
+  q2RenderPalette();
+  q2RenderStageItems();
+  clrFB('q2-fb');
+
+  if (!q2ResizeBound) {
+    window.addEventListener('resize', q2ClampAllItems);
+    q2ResizeBound = true;
+  }
+}
+
+function q2Hint() {
+  setFB('q2-fb','💡 先从待选区拖出一个空细胞和一枚箭头，补出“复制后细胞”；再继续拖出两个空细胞和一枚箭头，补出第一次分裂后的两个子细胞。X形染色体表示复制后，直条染色体表示分裂后的染色体。','hint');
+}
+
+function q2ShowResults() {}
+
+function q2Check() {
+  const counts = q2Items.reduce((acc, item) => {
+    acc[item.type] = (acc[item.type] || 0) + 1;
+    return acc;
+  }, {});
+
+  const enough =
+    (counts.cell || 0) >= 3 &&
+    (counts.arrow || 0) >= 2 &&
+    (counts.xLong || 0) >= 2 &&
+    (counts.xShort || 0) >= 2 &&
+    (counts.barLong || 0) >= 2 &&
+    (counts.barShort || 0) >= 2;
+
+  if (enough) {
+    setFB('q2-fb','🎉 关键素材已经补齐。接下来可以继续调整摆放顺序，对照“精原细胞 → 复制后细胞 → 第一次分裂后的2个子细胞”完成自己的减半过程图。','success');
+  } else {
+    q2Hint();
+  }
+}
+
+function q2Reset() {
+  q2Build();
+}
+
+// ── old stubs kept for compatibility (unused) ──
+function q2Children_stub(){} 
+
+
+// ═══════════════════════════════════════════════════
+// INQUIRY 3 — full meiosis flow, 1:1 matching into the correct slots
+// ═══════════════════════════════════════════════════
+const Q3_STAGE_SIZE = { width: 1320, height: 620 };
+const Q3_SLOT_DIM = { lg: 108, md: 88, sm: 74 };
+let q3ScaleBound = false;
+
+const Q3_STAGE_SLOTS = [
+  { id:'s0',  kind:'nucleusSimple',  size:'lg', x:20,   y:190, name:'精原细胞',             error:'❌ 这里应放入精原细胞的核内染色质状态。' },
+  { id:'s1',  kind:'nucleusComplex', size:'md', x:140,  y:200, name:'复制后细胞核',         error:'❌ 这里应放入复制后的细胞核状态。' },
+  { id:'s2',  kind:'prophase1',      size:'md', x:260,  y:200, name:'初级精母细胞前期',     error:'❌ 这里对应初级精母细胞前期。' },
+  { id:'s3',  kind:'metaphase1',     size:'md', x:380,  y:200, name:'初级精母细胞中期',     error:'❌ 这里对应初级精母细胞中期。' },
+  { id:'s4',  kind:'anaphase1',      size:'md', x:500,  y:200, name:'初级精母细胞后期',     error:'❌ 这里对应初级精母细胞后期。' },
+  { id:'s5',  kind:'secProA',        size:'md', x:650,  y:60,  name:'次级精母细胞末/前期A', error:'❌ 这里应放入“红长双杆 + 蓝短双杆”的次级精母细胞。' },
+  { id:'s6',  kind:'secProB',        size:'md', x:650,  y:340, name:'次级精母细胞前期B',    error:'❌ 这里应放入“蓝长双杆 + 红短双杆”的次级精母细胞。' },
+  { id:'s7',  kind:'meta2A',         size:'lg', x:770,  y:50,  name:'次级精母细胞中期A',    error:'❌ 这里对应“红长双杆 + 蓝短双杆”组合的中期。' },
+  { id:'s8',  kind:'meta2B',         size:'md', x:790,  y:340, name:'次级精母细胞中期B',    error:'❌ 这里对应“蓝长双杆 + 红短双杆”组合的中期。' },
+  { id:'s9',  kind:'ana2A',          size:'md', x:910,  y:60,  name:'次级精母细胞后期A',    error:'❌ 这里对应“红长 + 蓝短”分离的后期。' },
+  { id:'s10', kind:'ana2B',          size:'md', x:930,  y:340, name:'次级精母细胞后期B',    error:'❌ 这里对应“蓝长 + 红短”分离的后期。' },
+  { id:'s11', kind:'spermatidB',     size:'md', x:1080, y:320, name:'精细胞①',             error:'❌ 这里应放入“蓝长 + 红短”的精细胞。' },
+  { id:'s12', kind:'spermatidB',     size:'md', x:1080, y:460, name:'精细胞②',             error:'❌ 这里应放入“蓝长 + 红短”的精细胞。' },
+  { id:'s13', kind:'spermatidA',     size:'md', x:1080, y:20,  name:'精细胞③',             error:'❌ 这里应放入“红长 + 蓝短”的精细胞。' },
+  { id:'s14', kind:'spermatidA',     size:'md', x:1080, y:160, name:'精细胞④',             error:'❌ 这里应放入“红长 + 蓝短”的精细胞。' },
+  { id:'s15', kind:'sperm',          size:'sm', x:1210, y:327, name:'精子①',               error:'❌ 这里只能放入精子。' },
+  { id:'s16', kind:'sperm',          size:'sm', x:1210, y:467, name:'精子②',               error:'❌ 这里只能放入精子。' },
+  { id:'s17', kind:'sperm',          size:'sm', x:1210, y:27,  name:'精子③',               error:'❌ 这里只能放入精子。' },
+  { id:'s18', kind:'sperm',          size:'sm', x:1210, y:167, name:'精子④',               error:'❌ 这里只能放入精子。' },
+];
+
+const Q3_STAGE_BACKDROPS = [];
+
+const Q3_STAGE_LINKS = [
+  { d:'M 128 244 L 140 244' },
+  { d:'M 228 244 L 260 244' },
+  { d:'M 348 244 L 380 244' },
+  { d:'M 468 244 L 500 244' },
+  { d:'M 588 244 L 610 244 L 610 104 L 650 104' },
+  { d:'M 588 244 L 610 244 L 610 384 L 650 384' },
+  { d:'M 738 104 L 770 104' },
+  { d:'M 878 104 L 910 104' },
+  { d:'M 738 384 L 790 384' },
+  { d:'M 878 384 L 930 384' },
+  { d:'M 998 104 L 1025 104 L 1025 64 L 1080 64' },
+  { d:'M 998 104 L 1025 104 L 1025 204 L 1080 204' },
+  { d:'M 1018 384 L 1045 384 L 1045 364 L 1080 364' },
+  { d:'M 1018 384 L 1045 384 L 1045 504 L 1080 504' },
+  { d:'M 1168 64 L 1210 64' },
+  { d:'M 1168 204 L 1210 204' },
+  { d:'M 1168 364 L 1210 364' },
+  { d:'M 1168 504 L 1210 504' },
+];
+
+const Q3_VISUAL_LIBRARY = {
+  nucleusSimple: {
+    nucleus:'simple',
+    spindle:false,
+    cleavage:false,
+    chroms:[],
+  },
+  nucleusComplex: {
+    nucleus:'complex',
+    spindle:false,
+    cleavage:false,
+    chroms:[],
+  },
+  prophase1: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:18, y:18, rot:-18 },
+      { shape:'pair', size:'long',  col:'blue', x:42, y:16, rot:12  },
+      { shape:'pair', size:'short', col:'red',  x:60, y:54, rot:-12 },
+      { shape:'pair', size:'short', col:'blue', x:80, y:54, rot:18  },
+    ],
+  },
+  metaphase1: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:18, y:22, rot:0 },
+      { shape:'pair', size:'long',  col:'blue', x:44, y:22, rot:0 },
+      { shape:'pair', size:'short', col:'red',  x:30, y:58, rot:0 },
+      { shape:'pair', size:'short', col:'blue', x:54, y:58, rot:0 },
+    ],
+  },
+  anaphase1: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:18, y:14, rot:-16 },
+      { shape:'pair', size:'short', col:'blue', x:78, y:22, rot:8   },
+      { shape:'pair', size:'long',  col:'blue', x:18, y:60, rot:16  },
+      { shape:'pair', size:'short', col:'red',  x:78, y:70, rot:-8  },
+    ],
+  },
+  secProA: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:18, y:18, rot:-18 },
+      { shape:'pair', size:'short', col:'blue', x:78, y:58, rot:10  },
+    ],
+  },
+  secProB: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'blue', x:18, y:18, rot:-18 },
+      { shape:'pair', size:'short', col:'red',  x:78, y:58, rot:10  },
+    ],
+  },
+  meta2A: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:24, y:28, rot:0 },
+      { shape:'pair', size:'short', col:'blue', x:76, y:40, rot:0 },
+    ],
+  },
+  meta2B: {
+    spindle:true,
+    cleavage:false,
+    chroms:[
+      { shape:'pair', size:'long',  col:'blue', x:24, y:28, rot:0 },
+      { shape:'pair', size:'short', col:'red',  x:76, y:40, rot:0 },
+    ],
+  },
+  ana2A: {
+    spindle:true,
+    cleavage:true,
+    chroms:[
+      { shape:'bar', size:'long',  col:'red',  x:22, y:28, rot:0 },
+      { shape:'bar', size:'long',  col:'red',  x:82, y:28, rot:0 },
+      { shape:'bar', size:'short', col:'blue', x:38, y:62, rot:0 },
+      { shape:'bar', size:'short', col:'blue', x:92, y:62, rot:0 },
+    ],
+  },
+  ana2B: {
+    spindle:true,
+    cleavage:true,
+    chroms:[
+      { shape:'bar', size:'long',  col:'blue', x:22, y:28, rot:0 },
+      { shape:'bar', size:'long',  col:'blue', x:82, y:28, rot:0 },
+      { shape:'bar', size:'short', col:'red',  x:38, y:62, rot:0 },
+      { shape:'bar', size:'short', col:'red',  x:92, y:62, rot:0 },
+    ],
+  },
+  spermatidA: {
+    spindle:false,
+    cleavage:false,
+    chroms:[
+      { shape:'bar', size:'long',  col:'red',  x:44, y:18, rot:0 },
+      { shape:'bar', size:'short', col:'blue', x:80, y:36, rot:0 },
+    ],
+  },
+  spermatidB: {
+    spindle:false,
+    cleavage:false,
+    chroms:[
+      { shape:'bar', size:'long',  col:'blue', x:44, y:18, rot:0 },
+      { shape:'bar', size:'short', col:'red',  x:80, y:36, rot:0 },
+    ],
+  },
+};
+
+const Q3_CANDIDATES = [
+  { id:'q3-c01', kind:'nucleusComplex', poolDim:88, label:'复制后核内染色质细胞', fileName:'图片 5.png' },
+  { id:'q3-c02', kind:'prophase1',      poolDim:88, label:'初级精母细胞前期',     fileName:'图片 4.png' },
+  { id:'q3-c03', kind:'anaphase1',      poolDim:88, label:'初级精母细胞后期',     fileName:'图片 3.png' },
+  { id:'q3-c04', kind:'metaphase1',     poolDim:88, label:'初级精母细胞中期',     fileName:'图片 2.png' },
+  { id:'q3-c05', kind:'spermatidA',     poolDim:84, label:'红长蓝短精细胞',       fileName:'图片 12.png' },
+  { id:'q3-c06', kind:'ana2A',          poolDim:88, label:'次级精母细胞后期A',    fileName:'图片 10.png' },
+  { id:'q3-c07', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 16.png' },
+  { id:'q3-c08', kind:'secProA',        poolDim:84, label:'次级精母细胞末前期A',  fileName:'图片 1.png' },
+  { id:'q3-c09', kind:'spermatidB',     poolDim:84, label:'蓝长红短精细胞',       fileName:'图片 14.png' },
+  { id:'q3-c10', kind:'nucleusSimple',  poolDim:88, label:'精原细胞核内染色质细胞', fileName:'图片 7.png' },
+  { id:'q3-c11', kind:'meta2B',         poolDim:88, label:'次级精母细胞中期B',    fileName:'图片 8.png' },
+  { id:'q3-c12', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 19.png' },
+  { id:'q3-c13', kind:'secProB',        poolDim:84, label:'次级精母细胞末前期B',  fileName:'图片 11.png' },
+  { id:'q3-c14', kind:'meta2A',         poolDim:96, label:'次级精母细胞中期A',    fileName:'图片 6.png' },
+  { id:'q3-c15', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 17.png' },
+  { id:'q3-c16', kind:'ana2B',          poolDim:88, label:'次级精母细胞后期B',    fileName:'图片 9.png' },
+  { id:'q3-c17', kind:'spermatidA',     poolDim:84, label:'红长蓝短精细胞',       fileName:'图片 13.png' },
+  { id:'q3-c18', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 18.png' },
+  { id:'q3-c19', kind:'spermatidB',     poolDim:84, label:'蓝长红短精细胞',       fileName:'图片 15.png' },
+];
+
+const Q3_SLOT_ACCEPTS = {
+  s0:['q3-c10'],
+  s1:['q3-c01'],
+  s2:['q3-c02'],
+  s3:['q3-c04'],
+  s4:['q3-c03'],
+  s5:['q3-c08'],
+  s6:['q3-c13'],
+  s7:['q3-c14'],
+  s8:['q3-c11'],
+  s9:['q3-c06'],
+  s10:['q3-c16'],
+  s11:['q3-c09','q3-c19'],
+  s12:['q3-c09','q3-c19'],
+  s13:['q3-c05','q3-c17'],
+  s14:['q3-c05','q3-c17'],
+  s15:['q3-c15','q3-c18'],
+  s16:['q3-c15','q3-c18'],
+  s17:['q3-c07','q3-c12'],
+  s18:['q3-c07','q3-c12'],
+};
+
+let q3Placements = {};
+let q3DragCandidateId = null;
+
+function q3SlotById(id) {
+  return Q3_STAGE_SLOTS.find(slot => slot.id === id);
+}
+
+function q3CandidateById(id) {
+  return Q3_CANDIDATES.find(item => item.id === id);
+}
+
+function q3Dim(sizeKey) {
+  return Q3_SLOT_DIM[sizeKey] || 88;
+}
+
+function q3ImageUrl(fileName) {
+  return encodeURI('./images/' + fileName);
+}
+
+function q3ChrPairSVG(item, size) {
+  const isLong = item.size === 'long';
+  const len = size === 'lg' ? (isLong ? 34 : 22)
+            : size === 'md' ? (isLong ? 28 : 18)
+            :                 (isLong ? 22 : 14);
+  const thick = size === 'lg' ? 5.5 : size === 'md' ? 4.6 : 3.8;
+  const gap = size === 'lg' ? 5 : size === 'md' ? 4.2 : 3.6;
+  const w = len + 6;
+  const h = thick * 2 + gap + 4;
+  const fill = item.col === 'red' ? Q4_COLORS.red : Q4_COLORS.blue;
+  const stroke = item.col === 'red' ? Q4_COLORS.redDark : Q4_COLORS.blueDark;
+  const s = makeSVG(w, h);
+
+  [2, 2 + thick + gap].forEach(y => {
+    s.appendChild(svgRect(2, y, len, thick, thick / 2, fill, stroke, 1.2));
+  });
+  return s;
+}
+
+function q3CreateChromatinSVG(variant) {
+  const svg = makeSVG(76, 76);
+  svg.style.position = 'absolute';
+  svg.style.left = '0';
+  svg.style.top = '0';
+
+  const paths = variant === 'complex'
+    ? [
+        { d:'M14 18 C8 24, 10 38, 18 56', stroke:'#ef6a6a' },
+        { d:'M26 13 C20 25, 22 42, 28 58', stroke:'#7aa4ff' },
+        { d:'M44 18 C38 26, 41 40, 48 57', stroke:'#ef6a6a' },
+        { d:'M58 12 C51 24, 54 42, 61 56', stroke:'#7aa4ff' },
+      ]
+    : [
+        { d:'M24 14 C18 28, 20 42, 24 57', stroke:'#7aa4ff' },
+        { d:'M46 17 C40 29, 44 45, 50 58', stroke:'#ef6a6a' },
+      ];
+
+  paths.forEach(item => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', item.d);
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', item.stroke);
+    p.setAttribute('stroke-width', '2.4');
+    p.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(p);
+  });
+
+  const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('cx', '18');
+  dot.setAttribute('cy', '14');
+  dot.setAttribute('r', '3.3');
+  dot.setAttribute('fill', '#111827');
+  svg.appendChild(dot);
+  return svg;
+}
+
+function q3CreateSpermSVG(dim) {
+  const width = Math.round(dim * 1.1);
+  const height = Math.max(24, Math.round(dim * 0.5));
+  const svg = makeSVG(width, height);
+  svg.setAttribute('viewBox', '0 0 90 38');
+
+  const head = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+  head.setAttribute('cx', '18');
+  head.setAttribute('cy', '19');
+  head.setAttribute('rx', '10');
+  head.setAttribute('ry', '7.4');
+  head.setAttribute('fill', '#f8fbff');
+  head.setAttribute('stroke', '#9fb8e9');
+  head.setAttribute('stroke-width', '2');
+  svg.appendChild(head);
+
+  const red = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  red.setAttribute('x', '13');
+  red.setAttribute('y', '13');
+  red.setAttribute('width', '3');
+  red.setAttribute('height', '12');
+  red.setAttribute('rx', '1.2');
+  red.setAttribute('fill', '#e05252');
+  svg.appendChild(red);
+
+  const blue = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  blue.setAttribute('x', '17.5');
+  blue.setAttribute('y', '15');
+  blue.setAttribute('width', '2.4');
+  blue.setAttribute('height', '8');
+  blue.setAttribute('rx', '1.2');
+  blue.setAttribute('fill', '#1ea7d8');
+  svg.appendChild(blue);
+
+  const tail = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  tail.setAttribute('d', 'M28 19 C42 8, 55 9, 66 20 C76 30, 82 30, 87 24');
+  tail.setAttribute('fill', 'none');
+  tail.setAttribute('stroke', '#6ea8ff');
+  tail.setAttribute('stroke-width', '2.2');
+  tail.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(tail);
+
+  return svg;
+}
+
+function q3AddSpindle(cell) {
+  ['l1','l2','l3'].forEach(name => {
+    const line = document.createElement('div');
+    line.className = 'q3-spindle-line ' + name;
+    cell.appendChild(line);
+  });
+  ['top','bottom'].forEach(pos => {
+    const pole = document.createElement('div');
+    pole.className = 'q3-spindle-pole ' + pos;
+    cell.appendChild(pole);
+  });
+}
+
+function q3PlaceChromosome(cell, spec) {
+  const wrap = document.createElement('div');
+  wrap.className = 'q3-stage-chr';
+  wrap.style.left = spec.x + 'px';
+  wrap.style.top = spec.y + 'px';
+  wrap.style.transform = `rotate(${spec.rot || 0}deg)`;
+
+  const item = { size: spec.size, col: spec.col };
+  const svg = spec.shape === 'pair' ? q3ChrPairSVG(item, 'lg') : q4ChrBarSVG(item, 'lg');
+  svg.style.display = 'block';
+  wrap.appendChild(svg);
+  cell.appendChild(wrap);
+}
+
+function q3CreateCandidateVisual(candidate, dim, mode='pool') {
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-' + mode + (candidate.kind === 'sperm' ? ' q3-visual-sperm' : '');
+  outer.style.width = dim + 'px';
+  outer.style.height = dim + 'px';
+
+  const img = document.createElement('img');
+  img.className = 'q3-visual-img';
+  img.src = q3ImageUrl(candidate.fileName);
+  img.alt = candidate.label;
+  img.draggable = false;
+  outer.appendChild(img);
+  return outer;
+}
+
+function q3RenderAnnotations() {
+  const annos = document.getElementById('q3-stage-annos');
+  if (!annos) return;
+
+  annos.innerHTML = `
+    <div class="q3-stage-anno big center" style="left:10px;top:146px;width:90px;">精原细胞</div>
+    <div class="q3-stage-bracket-h" style="left:56px;top:296px;width:102px;"></div>
+    <div class="q3-stage-anno mid process center" style="left:62px;top:316px;width:90px;">复制</div>
+
+    <div class="q3-stage-anno big center" style="left:260px;top:150px;width:88px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:380px;top:150px;width:88px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:500px;top:150px;width:88px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:304px;top:296px;width:284px;"></div>
+    <div class="q3-stage-anno big group center" style="left:336px;top:314px;width:222px;">初级精母细胞</div>
+
+    <div class="q3-stage-anno big center" style="left:642px;top:14px;width:104px;">末/前期</div>
+    <div class="q3-stage-anno big center" style="left:790px;top:14px;width:84px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:930px;top:14px;width:84px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:694px;top:156px;width:324px;"></div>
+    <div class="q3-stage-anno big group center" style="left:744px;top:174px;width:226px;">次级精母细胞</div>
+
+    <div class="q3-stage-anno big center" style="left:642px;top:294px;width:104px;">末/前期</div>
+    <div class="q3-stage-anno big center" style="left:792px;top:294px;width:84px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:932px;top:294px;width:84px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:694px;top:436px;width:324px;"></div>
+    <div class="q3-stage-anno big group center" style="left:744px;top:454px;width:226px;">次级精母细胞</div>
+
+    <div class="q3-stage-anno big soft center" style="left:1068px;top:0;width:96px;">精细胞</div>
+    <div class="q3-stage-anno mid process center" style="left:1162px;top:38px;width:54px;">变形</div>
+    <div class="q3-stage-anno big soft center" style="left:1212px;top:0;width:70px;">精子</div>
+
+    <div class="q3-stage-anno big soft center" style="left:1068px;top:140px;width:96px;">精细胞</div>
+    <div class="q3-stage-anno mid process center" style="left:1162px;top:178px;width:54px;">变形</div>
+    <div class="q3-stage-anno big soft center" style="left:1212px;top:140px;width:70px;">精子</div>
+
+    <div class="q3-stage-anno big soft center" style="left:1068px;top:300px;width:96px;">精细胞</div>
+    <div class="q3-stage-anno mid process center" style="left:1162px;top:338px;width:54px;">变形</div>
+    <div class="q3-stage-anno big soft center" style="left:1212px;top:300px;width:70px;">精子</div>
+
+    <div class="q3-stage-anno big soft center" style="left:1068px;top:440px;width:96px;">精细胞</div>
+    <div class="q3-stage-anno mid process center" style="left:1162px;top:478px;width:54px;">变形</div>
+    <div class="q3-stage-anno big soft center" style="left:1212px;top:440px;width:70px;">精子</div>
+  `;
+}
+
+function q3FitStage() {
+  const shell = document.getElementById('q3-stage-fit');
+  const stage = document.getElementById('q3-stage');
+  if (!(shell && stage)) return;
+
+  const parent = shell.parentElement;
+  const availableWidth = parent ? parent.clientWidth : shell.clientWidth;
+  const scale = availableWidth ? Math.min(1, availableWidth / Q3_STAGE_SIZE.width) : 1;
+
+  shell.style.height = (Q3_STAGE_SIZE.height * scale) + 'px';
+  stage.style.transform = `scale(${scale})`;
+}
+
+function q3RenderArrows() {
+  const svg = document.getElementById('q3-stage-svg');
+  if (!svg) return;
+
+  svg.setAttribute('viewBox', `0 0 ${Q3_STAGE_SIZE.width} ${Q3_STAGE_SIZE.height}`);
+  svg.setAttribute('width', Q3_STAGE_SIZE.width);
+  svg.setAttribute('height', Q3_STAGE_SIZE.height);
+  svg.innerHTML = `
+    <defs>
+      <marker id="q3-arrowhead" markerWidth="7" markerHeight="7" refX="5.2" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
+        <polygon points="0 0, 6 3.2, 0 6.4" fill="#111827"></polygon>
+      </marker>
+    </defs>
+  `;
+
+  Q3_STAGE_BACKDROPS.forEach(item => {
+    const band = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    band.setAttribute('d', item.d);
+    band.setAttribute('fill', 'none');
+    band.setAttribute('stroke', item.color);
+    band.setAttribute('stroke-width', item.width.toString());
+    band.setAttribute('stroke-linecap', 'round');
+    band.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(band);
+  });
+
+  Q3_STAGE_LINKS.forEach(link => {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', link.d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#111827');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('opacity', '.98');
+    path.setAttribute('marker-end', 'url(#q3-arrowhead)');
+    svg.appendChild(path);
+  });
+}
+
+function q3ClearDropHighlights() {
+  Q3_STAGE_SLOTS.forEach(slot => {
+    const el = document.getElementById('q3-slot-' + slot.id);
+    if (el) el.classList.remove('can-drop');
+  });
+}
+
+function q3CanAccept(slot, candidate) {
+  if (!(slot && candidate)) return false;
+  const accepted = Q3_SLOT_ACCEPTS[slot.id];
+  if (accepted && accepted.length) return accepted.includes(candidate.id);
+  return slot.kind === candidate.kind;
+}
+
+function q3RenderStage() {
+  const layer = document.getElementById('q3-stage-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+
+  Q3_STAGE_SLOTS.forEach(slot => {
+    const dim = q3Dim(slot.size);
+    const el = document.createElement('div');
+    el.id = 'q3-slot-' + slot.id;
+    el.className = 'q3-stage-slot';
+    el.style.left = slot.x + 'px';
+    el.style.top = slot.y + 'px';
+    el.style.width = dim + 'px';
+    el.style.height = dim + 'px';
+
+    const candidateId = q3Placements[slot.id];
+    if (candidateId) {
+      el.classList.add('filled');
+      const candidate = q3CandidateById(candidateId);
+      const preview = q3CreateCandidateVisual(candidate, Math.max(34, dim - 8), 'stage');
+      preview.style.pointerEvents = 'auto';
+      preview.title = '点击退回';
+      preview.addEventListener('click', () => {
+        q3Placements[slot.id] = null;
+        clrFB('q3-fb');
+        q3RenderPool();
+        q3RenderStage();
+      });
+      el.appendChild(preview);
+    }
+
+    el.ondragover = e => {
+      e.preventDefault();
+      const candidate = q3CandidateById(q3DragCandidateId);
+      if (!q3Placements[slot.id] && q3CanAccept(slot, candidate)) {
+        el.classList.add('can-drop');
+      }
+    };
+    el.ondragleave = () => el.classList.remove('can-drop');
+    el.ondrop = e => {
+      e.preventDefault();
+      el.classList.remove('can-drop');
+      q3HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
+    };
+
+    layer.appendChild(el);
+  });
+}
+
+function q3RenderPool() {
+  const pool = document.getElementById('q3-pool');
+  if (!pool) return;
+  pool.innerHTML = '';
+
+  const used = new Set(Object.values(q3Placements).filter(Boolean));
+  Q3_CANDIDATES.filter(item => !used.has(item.id)).forEach(candidate => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'q3-pool-item';
+    btn.draggable = true;
+    btn.dataset.id = candidate.id;
+    btn.title = candidate.label;
+    btn.appendChild(q3CreateCandidateVisual(candidate, candidate.poolDim, 'pool'));
+
+    btn.addEventListener('dragstart', e => {
+      q3DragCandidateId = candidate.id;
+      e.dataTransfer.setData('text/plain', candidate.id);
+      setTimeout(() => btn.classList.add('dragging'), 0);
+    });
+    btn.addEventListener('dragend', () => {
+      btn.classList.remove('dragging');
+      q3DragCandidateId = null;
+      q3ClearDropHighlights();
+    });
+
+    pool.appendChild(btn);
+  });
+}
+
+function q3FlashSlotState(slotId, type) {
+  const el = document.getElementById('q3-slot-' + slotId);
+  if (!el) return;
+  el.classList.add(type);
+  setTimeout(() => el.classList.remove(type), type === 'correct' ? 650 : 450);
+}
+
+function q3HandleDrop(slotId, candidateId) {
+  const slot = q3SlotById(slotId);
+  const candidate = q3CandidateById(candidateId);
+  if (!slot || !candidate) return;
+
+  if (q3Placements[slotId]) {
+    return;
+  }
+
+  if (!q3CanAccept(slot, candidate)) {
+    return;
+  }
+
+  q3Placements[slotId] = candidateId;
+  clrFB('q3-fb');
+  q3RenderPool();
+  q3RenderStage();
+
+  if (Q3_STAGE_SLOTS.every(item => q3Placements[item.id])) {
+    Q3_STAGE_SLOTS.forEach(item => q3FlashSlotState(item.id, 'correct'));
+    clrFB('q3-fb');
+  }
+}
+
+function q3Hint() {
+  setFB('q3-fb', '💡 先从两种“核内染色质细胞”开始，再按“前期 → 中期 → 后期”补全初级精母细胞；之后分别找到两种不同组合的次级精母细胞、对应的精细胞，最后再放入4个精子。', 'hint');
+}
+
+function q3Build() {
+  q3Placements = {};
+  q3DragCandidateId = null;
+  q3RenderAnnotations();
+  q3RenderArrows();
+  q3RenderStage();
+  q3RenderPool();
+  q3FitStage();
+  clrFB('q3-fb');
+
+  if (!q3ScaleBound) {
+    window.addEventListener('resize', q3FitStage);
+    q3ScaleBound = true;
+  }
+}
+
+function q3Reset() {
+  q3Placements = {};
+  q3DragCandidateId = null;
+  clrFB('q3-fb');
+  q3Build();
+}
+function fullReset() { q1Reset(); q2Reset(); q3Reset(); switchTab(0); }
+
+// ═══════════════════════════════════════════════════
+// INQUIRY 4 — same as inquiry 3 but with red/blue color distinction
+// ═══════════════════════════════════════════════════
+// Colors: pair1=red(同源A), pair2=blue(同源B)
+// X items: 4 (red-long, blue-long, red-short, blue-short)
+// Bar items: 8 (red-long×2, blue-long×2, red-short×2, blue-short×2)
+
+const Q4_COLORS = { red:'#e05252', redDark:'#a83232', blue:'#1ea7d8', blueDark:'#0f6f94' };
+
+const Q4_X_ITEMS = [
+  { id:'q4xRL', size:'long',  col:'red',  label:'红长X' },
+  { id:'q4xBL', size:'long',  col:'blue', label:'蓝长X' },
+  { id:'q4xRS', size:'short', col:'red',  label:'红短X' },
+  { id:'q4xBS', size:'short', col:'blue', label:'蓝短X' },
+];
+const Q4_BAR_ITEMS = [
+  { id:'q4bRL1', size:'long',  col:'red',  label:'红长①' },
+  { id:'q4bRL2', size:'long',  col:'red',  label:'红长②' },
+  { id:'q4bBL1', size:'long',  col:'blue', label:'蓝长①' },
+  { id:'q4bBL2', size:'long',  col:'blue', label:'蓝长②' },
+  { id:'q4bRS1', size:'short', col:'red',  label:'红短①' },
+  { id:'q4bRS2', size:'short', col:'red',  label:'红短②' },
+  { id:'q4bBS1', size:'short', col:'blue', label:'蓝短①' },
+  { id:'q4bBS2', size:'short', col:'blue', label:'蓝短②' },
+];
+const Q4_ALL_ITEMS = [...Q4_X_ITEMS, ...Q4_BAR_ITEMS];
+
+// Origin cell: tilted positions, alternating red/blue
+const Q4_ORIGIN_POSES = [
+  { left:50, top:18, rot:-40, size:'long',  col:'red'  },
+  { left:126,top:18, rot: 40, size:'long',  col:'blue' },
+  { left:56, top:112,rot:  0, size:'short', col:'red'  },
+  { left:116,top:112,rot:  0, size:'short', col:'blue' },
+];
+
+// Sperm cells: each gets 1 red + 1 blue bar (known)
+const Q4_SPERM = [
+  [{ size:'long', col:'red' }, { size:'long', col:'blue' }],
+  [{ size:'short', col:'red' }, { size:'short', col:'blue' }],
+  [{ size:'long', col:'red' }, { size:'long', col:'blue' }],
+  [{ size:'short', col:'red' }, { size:'short', col:'blue' }],
+];
+
+let q4SecA=[], q4SecB=[], q4Sp=[[],[],[],[]];
+
+function q4ChrBarSVG(item, size) {
+  const isLong = item.size === 'long';
+  const h = size==='xs' ? (isLong?38:24)
+          : size==='sm' ? (isLong?52:32)
+          : size==='md' ? (isLong?68:42)
+          : size==='lg' ? (isLong?80:50)
+          :               (isLong?68:42);
+  const w = size==='xs' ? 8 : size==='sm' ? 10 : 12;
+  const r = size==='xs' ? 3.5 : size==='sm' ? 4 : 5;
+  const fill  = item.col==='red' ? Q4_COLORS.red  : Q4_COLORS.blue;
+  const stroke= item.col==='red' ? Q4_COLORS.redDark : Q4_COLORS.blueDark;
+  const s = makeSVG(w, h);
+  s.appendChild(svgRect(1,1,w-2,h-2,3,fill,stroke,1.5));
+  s.appendChild(svgCircle(w/2,h*0.42,r,'#fff','#64748b',1.5));
+  return s;
+}
+
+function q4ChrXSVG(item, size) {
+  const isLong = item.size === 'long';
+  const arm = size==='xs' ? (isLong?18:12) : size==='sm' ? (isLong?26:17) : (isLong?36:22);
+  const sp  = size==='xs' ? (isLong?5:4)   : size==='sm' ? (isLong?7:5)   : (isLong?9:6);
+  const W = sp*2+14, H = arm*2+8;
+  const cx=W/2, cy=H/2;
+  const thick = size==='xs' ? (isLong?5:4) : size==='sm' ? (isLong?6:5) : (isLong?7:6);
+  const fill  = item.col==='red' ? Q4_COLORS.red  : Q4_COLORS.blue;
+  const stroke= item.col==='red' ? Q4_COLORS.redDark : Q4_COLORS.blueDark;
+  const s = makeSVG(W, H);
+  [[cx,cy,cx-sp,cy-arm],[cx,cy,cx+sp,cy-arm],[cx,cy,cx-sp,cy+arm],[cx,cy,cx+sp,cy+arm]]
+    .forEach(([x1,y1,x2,y2])=>{
+      s.appendChild(svgLine(x1,y1,x2,y2,thick+2,stroke));
+      s.appendChild(svgLine(x1,y1,x2,y2,thick,fill));
+    });
+  s.appendChild(svgCircle(cx,cy,size==='xs'?3:(isLong?5:4),'#fff','#64748b',1.5));
+  return s;
+}
+
+function q4MakeDraggable(item, svgEl) {
+  const wrap = document.createElement('div');
+  wrap.draggable = true; wrap.dataset.id = item.id;
+  wrap.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;cursor:grab;user-select:none;padding:6px 8px;background:#f1f5f9;border-radius:10px;';
+  svgEl.style.pointerEvents = 'none';
+  wrap.appendChild(svgEl);
+  wrap.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', item.id); setTimeout(()=>{wrap.style.opacity='.3';},0); });
+  wrap.addEventListener('dragend', ()=>{ wrap.style.opacity='1'; });
+  return wrap;
+}
+
+function q4Build() {
+  q4SecA=[]; q4SecB=[];
+
+  // Origin cell - SVG-based for perfect scaling
+  const origin = document.getElementById('q4-origin-inner');
+  if (origin) {
+    origin.innerHTML='';
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 150 150');
+    svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
+    const chrDefs=[
+      {cx:55, cy:45, rot:-40, isLong:true,  col:'red'  },
+      {cx:100,cy:45, rot: 40, isLong:true,  col:'blue' },
+      {cx:60, cy:105,rot:  0, isLong:false, col:'red'  },
+      {cx:95, cy:105,rot:  0, isLong:false, col:'blue' },
+    ];
+    const cols={red:'#e05252',redDark:'#a83232',blue:'#1ea7d8',blueDark:'#0f6f94'};
+    chrDefs.forEach(d=>{
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('transform',`rotate(${d.rot},${d.cx},${d.cy})`);
+      const w=10,h=d.isLong?66:40;
+      const fill=d.col==='red'?cols.red:cols.blue;
+      const stroke=d.col==='red'?cols.redDark:cols.blueDark;
+      const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',d.cx-w/2); rect.setAttribute('y',d.cy-h/2);
+      rect.setAttribute('width',w); rect.setAttribute('height',h);
+      rect.setAttribute('rx','3'); rect.setAttribute('fill',fill);
+      rect.setAttribute('stroke',stroke); rect.setAttribute('stroke-width','1.5');
+      const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx',d.cx); circle.setAttribute('cy',d.cy-h/2+h*0.42);
+      circle.setAttribute('r','4'); circle.setAttribute('fill','#fff');
+      circle.setAttribute('stroke','#64748b'); circle.setAttribute('stroke-width','1.5');
+      g.appendChild(rect); g.appendChild(circle);
+      svg.appendChild(g);
+    });
+    origin.appendChild(svg);
+  }
+
+  // Pre-fill repCell with 4 X-shapes
+  const repInner = document.getElementById('q4-repCell-inner');
+  if (repInner) {
+    repInner.innerHTML='';
+    Q4_X_ITEMS.forEach(item=>repInner.appendChild(q4ChrXSVG(item,'sm')));
+  }
+
+  // Initialize 4 sperm cells as empty drop targets (students drag in)
+  for (let i=0;i<4;i++){
+    const el=document.getElementById('q4-sp'+i+'-inner');
+    if(!el) continue;
+    el.innerHTML=''; el.style.gap='5px';
+    const q=document.createElement('div');
+    q.className='q-mark-sm'; q.style.fontSize='28px'; q.textContent='?';
+    el.appendChild(q);
+  }
+
+  q4RenderPools(); q4RenderSecCells(); q4RenderSperm();
+  makeDots('q4-dots-A',4,0); makeDots('q4-dots-B',4,0);
+  clrFB('q4-fb');
+
+  // Drop: secA
+  const secAEl = document.getElementById('q4-secA');
+  if (secAEl) {
+    secAEl.ondragover=e=>{e.preventDefault();secAEl.classList.add('drop-active');};
+    secAEl.ondragleave=()=>secAEl.classList.remove('drop-active');
+    secAEl.ondrop=e=>{
+      e.preventDefault();secAEl.classList.remove('drop-active');
+      const id=e.dataTransfer.getData('text/plain');
+      if (!Q4_ALL_ITEMS.find(x=>x.id===id)) return;
+      if ([...q4SecA,...q4SecB,...q4Sp.flat()].includes(id)) return;
+      q4SecA.push(id); q4RenderPools(); q4RenderSecCells();
+      makeDots('q4-dots-A',4,q4SecA.length);
+    };
+  }
+
+  // Drop: secB
+  const secBEl = document.getElementById('q4-secB');
+  if (secBEl) {
+    secBEl.ondragover=e=>{e.preventDefault();secBEl.classList.add('drop-active');};
+    secBEl.ondragleave=()=>secBEl.classList.remove('drop-active');
+    secBEl.ondrop=e=>{
+      e.preventDefault();secBEl.classList.remove('drop-active');
+      const id=e.dataTransfer.getData('text/plain');
+      if (!Q4_ALL_ITEMS.find(x=>x.id===id)) return;
+      if ([...q4SecA,...q4SecB,...q4Sp.flat()].includes(id)) return;
+      q4SecB.push(id); q4RenderPools(); q4RenderSecCells();
+      makeDots('q4-dots-B',4,q4SecB.length);
+    };
+  }
+
+  // Drop: 4 sperm cells
+  for (let i=0;i<4;i++){
+    const spEl=document.getElementById('q4-sp'+i);
+    if(!spEl) continue;
+    const idx=i;
+    spEl.ondragover=e=>{e.preventDefault();spEl.classList.add('drop-active');};
+    spEl.ondragleave=()=>spEl.classList.remove('drop-active');
+    spEl.ondrop=e=>{
+      e.preventDefault();spEl.classList.remove('drop-active');
+      const id=e.dataTransfer.getData('text/plain');
+      if (!Q4_ALL_ITEMS.find(x=>x.id===id)) return;
+      if ([...q4SecA,...q4SecB,...q4Sp.flat()].includes(id)) return;
+      q4Sp[idx].push(id); q4RenderPools(); q4RenderSperm();
+    };
+  }
+
+  // Pool returns
+  const pX = document.getElementById('q4-pool-x');
+  if (pX) {
+    pX.ondragover=e=>e.preventDefault();
+    pX.ondrop=e=>{
+      e.preventDefault();const id=e.dataTransfer.getData('text/plain');
+      q4SecA=q4SecA.filter(x=>x!==id); q4SecB=q4SecB.filter(x=>x!==id);
+      q4Sp=q4Sp.map(arr=>arr.filter(x=>x!==id));
+      q4RenderPools(); q4RenderSecCells(); q4RenderSperm();
+      makeDots('q4-dots-A',4,q4SecA.length); makeDots('q4-dots-B',4,q4SecB.length);
+    };
+  }
+  const pB = document.getElementById('q4-pool-bar');
+  if (pB) {
+    pB.ondragover=e=>e.preventDefault();
+    pB.ondrop=e=>{
+      e.preventDefault();const id=e.dataTransfer.getData('text/plain');
+      q4SecA=q4SecA.filter(x=>x!==id); q4SecB=q4SecB.filter(x=>x!==id);
+      q4Sp=q4Sp.map(arr=>arr.filter(x=>x!==id));
+      q4RenderPools(); q4RenderSecCells(); q4RenderSperm();
+      makeDots('q4-dots-A',4,q4SecA.length); makeDots('q4-dots-B',4,q4SecB.length);
+    };
+  }
+}
+
+function q4RenderPools() {
+  const used=[...q4SecA,...q4SecB,...q4Sp.flat()];
+  const pX=document.getElementById('q4-pool-x');
+  if(pX){pX.innerHTML='';Q4_X_ITEMS.filter(i=>!used.includes(i.id)).forEach(item=>pX.appendChild(q4MakeDraggable(item,q4ChrXSVG(item,"lg"))));}
+  const pBar=document.getElementById('q4-pool-bar');
+  if(pBar){pBar.innerHTML='';Q4_BAR_ITEMS.filter(i=>!used.includes(i.id)).forEach(item=>pBar.appendChild(q4MakeDraggable(item,q4ChrBarSVG(item,'lg'))));}
+}
+
+function q4RenderSecCells() {
+  [['q4-secA-inner',q4SecA,'q4-dots-A'],['q4-secB-inner',q4SecB,'q4-dots-B']].forEach(([innerId,arr,dotsId])=>{
+    const inner=document.getElementById(innerId); if(!inner) return;
+    inner.innerHTML='';
+    inner.style.cssText='display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;width:100%;height:100%;padding:10px 8px;';
+    if(arr.length===0){const q=document.createElement('div');q.className='q-mark-md';q.textContent='?';inner.appendChild(q);return;}
+    arr.forEach(id=>{
+      const item=Q4_ALL_ITEMS.find(x=>x.id===id); if(!item) return;
+      const svgEl=Q4_X_ITEMS.find(x=>x.id===id) ? q4ChrXSVG(item,'sm') : q4ChrBarSVG(item,'sm');
+      svgEl.style.cursor='pointer'; svgEl.title='点击退回';
+      svgEl.style.pointerEvents='auto';
+      svgEl.addEventListener('click',()=>{
+        q4SecA=q4SecA.filter(x=>x!==id); q4SecB=q4SecB.filter(x=>x!==id);
+        q4RenderPools(); q4RenderSecCells();
+        makeDots('q4-dots-A',4,q4SecA.length); makeDots('q4-dots-B',4,q4SecB.length);
+      });
+      inner.appendChild(svgEl);
+    });
+  });
+}
+
+function q4RenderSperm() {
+  for (let i=0;i<4;i++){
+    const inner=document.getElementById('q4-sp'+i+'-inner');
+    if(!inner) continue;
+    inner.innerHTML=''; inner.style.gap='5px';
+    if(q4Sp[i].length===0){
+      const q=document.createElement('div');q.className='q-mark-sm';q.style.fontSize='28px';q.textContent='?';
+      inner.appendChild(q);
+    } else {
+      q4Sp[i].forEach(id=>{
+        const item=Q4_ALL_ITEMS.find(x=>x.id===id); if(!item) return;
+        const svgEl=Q4_X_ITEMS.find(x=>x.id===id)?q4ChrXSVG(item,'xs'):q4ChrBarSVG(item,'xs');
+        svgEl.style.cursor='pointer'; svgEl.title='点击退回';
+        svgEl.style.pointerEvents='auto';
+        const idx=i;
+        svgEl.addEventListener('click',()=>{
+          q4Sp[idx]=q4Sp[idx].filter(x=>x!==id);
+          q4RenderPools(); q4RenderSperm();
+        });
+        inner.appendChild(svgEl);
+      });
+    }
+  }
+}
+
+function q4Reset() { q4SecA=[]; q4SecB=[]; q4Sp=[[],[],[],[]]; clrFB('q4-fb'); q4Build(); }
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+q1Build();
+q2Build();
+q3Build();
+
+// ═══════════════════════════════════════════════════
+// TOUCH SUPPORT — makes drag-and-drop work on tablets (iOS/Android)
+// Translates touchstart/touchmove/touchend into dragstart/dragover/drop
+// ═══════════════════════════════════════════════════
+(function() {
+  let dragEl = null;       // the element being dragged
+  let dragId = null;       // data being transferred
+  let ghost  = null;       // visual clone following finger
+  let lastTarget = null;   // last element under finger
+  let dragMode = 'ghost';  // ghost | direct
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let dragPlaceholder = null;
+  let dragInlineStyle = null;
+
+  function isQ3PoolDrag(el) {
+    return !!(el && el.classList && el.classList.contains('q3-pool-item'));
+  }
+
+  function activeTouchVisual() {
+    return dragMode === 'direct' ? dragEl : ghost;
+  }
+
+  function getElAtPoint(x, y) {
+    const visual = activeTouchVisual();
+    if (visual) visual.style.display = 'none';
+    const el = document.elementFromPoint(x, y);
+    if (visual) visual.style.display = '';
+    return el;
+  }
+
+  function findDropTarget(el) {
+    // Walk up DOM to find an element with ondrop handler
+    while (el && el !== document.body) {
+      if (el.ondrop || el.getAttribute('data-droppable')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function findDraggable(el) {
+    while (el && el !== document.body) {
+      if (el.draggable) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function createGhost(el, x, y) {
+    const rect = el.getBoundingClientRect();
+    ghost = el.cloneNode(true);
+    ghost.style.cssText = `
+      position: fixed;
+      left: ${rect.left}px;
+      top: ${rect.top}px;
+      width: ${rect.width}px;
+      height: ${rect.height}px;
+      opacity: 0.75;
+      pointer-events: none;
+      z-index: 9999;
+      transform: scale(1.1);
+      transition: none;
+      background: #e0f2fe;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(ghost);
+  }
+
+  function startDirectTouchDrag(el, touch) {
+    const rect = el.getBoundingClientRect();
+    const computed = window.getComputedStyle(el);
+
+    dragMode = 'direct';
+    dragOffsetX = touch.clientX - rect.left;
+    dragOffsetY = touch.clientY - rect.top;
+    dragInlineStyle = {
+      position: el.style.position,
+      left: el.style.left,
+      top: el.style.top,
+      width: el.style.width,
+      height: el.style.height,
+      zIndex: el.style.zIndex,
+      pointerEvents: el.style.pointerEvents,
+      margin: el.style.margin,
+      transition: el.style.transition,
+      transform: el.style.transform,
+      boxShadow: el.style.boxShadow,
+    };
+
+    dragPlaceholder = document.createElement('div');
+    dragPlaceholder.style.width = rect.width + 'px';
+    dragPlaceholder.style.height = rect.height + 'px';
+    dragPlaceholder.style.display = computed.display === 'inline' ? 'inline-block' : computed.display;
+    dragPlaceholder.style.visibility = 'hidden';
+    dragPlaceholder.style.pointerEvents = 'none';
+
+    if (el.parentNode) {
+      el.parentNode.insertBefore(dragPlaceholder, el);
+    }
+
+    el.style.position = 'fixed';
+    el.style.left = rect.left + 'px';
+    el.style.top = rect.top + 'px';
+    el.style.width = rect.width + 'px';
+    el.style.height = rect.height + 'px';
+    el.style.zIndex = '9999';
+    el.style.pointerEvents = 'none';
+    el.style.margin = '0';
+    el.style.transition = 'none';
+    el.style.transform = 'none';
+    el.style.boxShadow = '0 12px 28px rgba(15,23,42,.18)';
+  }
+
+  function moveTouchVisual(touch) {
+    if (dragMode === 'direct' && dragEl) {
+      dragEl.style.left = (touch.clientX - dragOffsetX) + 'px';
+      dragEl.style.top = (touch.clientY - dragOffsetY) + 'px';
+      return;
+    }
+
+    if (ghost) {
+      const rect = ghost.getBoundingClientRect();
+      ghost.style.left = (touch.clientX - rect.width / 2) + 'px';
+      ghost.style.top  = (touch.clientY - rect.height / 2) + 'px';
+    }
+  }
+
+  function clearTouchDragVisual(restoreOriginal) {
+    if (ghost) {
+      ghost.remove();
+      ghost = null;
+    }
+
+    if (dragMode === 'direct' && dragEl) {
+      if (restoreOriginal && dragPlaceholder && dragPlaceholder.parentNode) {
+        dragPlaceholder.parentNode.insertBefore(dragEl, dragPlaceholder);
+      }
+      if (dragPlaceholder && dragPlaceholder.parentNode) {
+        dragPlaceholder.parentNode.removeChild(dragPlaceholder);
+      }
+      dragPlaceholder = null;
+
+      if (dragInlineStyle) {
+        dragEl.style.position = dragInlineStyle.position;
+        dragEl.style.left = dragInlineStyle.left;
+        dragEl.style.top = dragInlineStyle.top;
+        dragEl.style.width = dragInlineStyle.width;
+        dragEl.style.height = dragInlineStyle.height;
+        dragEl.style.zIndex = dragInlineStyle.zIndex;
+        dragEl.style.pointerEvents = dragInlineStyle.pointerEvents;
+        dragEl.style.margin = dragInlineStyle.margin;
+        dragEl.style.transition = dragInlineStyle.transition;
+        dragEl.style.transform = dragInlineStyle.transform;
+        dragEl.style.boxShadow = dragInlineStyle.boxShadow;
+      }
+      dragInlineStyle = null;
+    } else if (dragEl) {
+      dragEl.style.opacity = '';
+    }
+  }
+
+  function clearTouchDragState(restoreOriginal) {
+    clearTouchDragVisual(restoreOriginal);
+    if (lastTarget) {
+      if (lastTarget.ondragleave) {
+        lastTarget.ondragleave();
+      } else {
+        lastTarget.classList.remove('drop-active');
+      }
+    }
+    if (typeof q3DragCandidateId !== 'undefined') {
+      q3DragCandidateId = null;
+    }
+    if (typeof q3ClearDropHighlights === 'function') {
+      q3ClearDropHighlights();
+    }
+    dragEl = null;
+    dragId = null;
+    lastTarget = null;
+    dragMode = 'ghost';
+    dragOffsetX = 0;
+    dragOffsetY = 0;
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    const touch = e.touches[0];
+    const el = findDraggable(document.elementFromPoint(touch.clientX, touch.clientY));
+    if (!el) return;
+
+    dragEl = el;
+    dragId = el.dataset.id || null;
+    if (!dragId) return;
+
+    if (isQ3PoolDrag(el)) {
+      startDirectTouchDrag(el, touch);
+      if (typeof q3DragCandidateId !== 'undefined') {
+        q3DragCandidateId = dragId;
+      }
+    } else {
+      dragMode = 'ghost';
+      createGhost(el, touch.clientX, touch.clientY);
+      el.style.opacity = '0.3';
+    }
+
+    // Prevent scroll while dragging
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!dragEl || !dragId) return;
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    moveTouchVisual(touch);
+
+    // Highlight drop target
+    const elUnder = getElAtPoint(touch.clientX, touch.clientY);
+    const dropTarget = findDropTarget(elUnder);
+
+    if (lastTarget && lastTarget !== dropTarget) {
+      if (lastTarget.ondragleave) {
+        lastTarget.ondragleave();
+      } else {
+        lastTarget.classList.remove('drop-active');
+      }
+    }
+    if (dropTarget) {
+      if (dropTarget.ondragover) {
+        dropTarget.ondragover({
+          preventDefault: () => {},
+          dataTransfer: { getData: () => dragId }
+        });
+      } else {
+        dropTarget.classList.add('drop-active');
+      }
+    }
+    lastTarget = dropTarget;
+  }, { passive: false });
+
+  function finishTouchDrag(e) {
+    if (!dragEl || !dragId) return;
+
+    const touch = e.changedTouches[0];
+    const elUnder = getElAtPoint(touch.clientX, touch.clientY);
+    const dropTarget = findDropTarget(elUnder);
+    const didDrop = !!(dropTarget && dropTarget.ondrop);
+
+    // Fire synthetic drop
+    if (didDrop) {
+      const syntheticEvent = {
+        preventDefault: () => {},
+        dataTransfer: { getData: (type) => dragId }
+      };
+      dropTarget.ondrop(syntheticEvent);
+    }
+
+    clearTouchDragState(!didDrop);
+  }
+
+  document.addEventListener('touchend', finishTouchDrag, { passive: false });
+  document.addEventListener('touchcancel', finishTouchDrag, { passive: false });
+})();
+
+
+</script>
+</body>
+</html>
