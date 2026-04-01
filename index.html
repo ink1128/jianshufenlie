@@ -21,8 +21,11 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 .card{background:#fff;border-radius:20px;box-shadow:0 6px 24px rgba(15,23,42,.08);padding:clamp(12px,3vw,28px);}
 .card-title{font-size:clamp(13px,2.8vw,18px);font-weight:700;margin-bottom:16px;}
 /* Diagram scroll wrapper */
-.diagram-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;}
+.diagram-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:#94a3b8 rgba(226,232,240,.85);}
 .diagram-scroll > div{display:flex;align-items:center;gap:12px;width:100%;min-width:0;}
+.diagram-scroll::-webkit-scrollbar{height:10px;}
+.diagram-scroll::-webkit-scrollbar-track{background:rgba(226,232,240,.85);border-radius:999px;}
+.diagram-scroll::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:999px;}
 /* Cell */
 .cell{border:4px solid #000;border-radius:9999px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;transition:border-color .2s,box-shadow .2s;}
 .cell-xl{width:180px;height:180px;}
@@ -242,20 +245,20 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 }
 .q2-piece{display:flex;align-items:center;justify-content:center;width:100%;height:100%;pointer-events:none;}
 .q2-piece-cell{
-  width:88px;
-  height:88px;
+  width:76px;
+  height:76px;
   border:3px solid #111827;
   border-radius:50%;
   background:#fff;
 }
 .q2-piece-arrow{
-  font-size:42px;
+  font-size:34px;
   font-weight:700;
   color:#111827;
   line-height:1;
 }
-.q2-piece-palette .q2-piece-cell{width:68px;height:68px;border-width:3px;}
-.q2-piece-palette .q2-piece-arrow{font-size:34px;}
+.q2-piece-palette .q2-piece-cell{width:60px;height:60px;border-width:3px;}
+.q2-piece-palette .q2-piece-arrow{font-size:28px;}
 .q2-drag-ghost{
   position:fixed;
   left:0;
@@ -278,6 +281,12 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   background:
     radial-gradient(circle at top right, rgba(14,165,233,.12), transparent 34%),
     linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+}
+.q3-palette-wrap .diagram-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:12px;
+  touch-action:pan-x pan-y;
 }
 .q3-stage-fit{
   position:relative;
@@ -370,6 +379,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   padding:0;
   cursor:grab;
   user-select:none;
+  touch-action:manipulation;
 }
 .q3-pool-item.dragging{opacity:.35;}
 .q3-visual{
@@ -566,6 +576,15 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   .q2-palette-grid{
     grid-template-columns:repeat(auto-fit, minmax(92px, 1fr));
   }
+  .q3-palette-wrap .diagram-scroll > .q3-pool{
+    width:max-content;
+    min-width:max-content;
+    grid-auto-flow:column;
+    grid-template-columns:none;
+    grid-template-rows:repeat(2, minmax(96px, auto));
+    grid-auto-columns:96px;
+    justify-items:center;
+  }
 }
 </style>
 </head>
@@ -660,7 +679,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
         <div class="diagram-scroll">
           <div class="q3-pool" id="q3-pool"></div>
         </div>
-        <div class="q3-palette-note">将细胞或精子拖入对应空位，已放入的素材可点击退回。</div>
+        <div class="q3-palette-note">将细胞或精子拖入对应空位，已放入的素材可点击退回。手机或平板可长按素材后拖动，左右滑动查看更多。</div>
       </div>
     </div>
     <div class="actions"><button class="btn" onclick="q3Reset()">↺ 重置</button></div>
@@ -994,12 +1013,12 @@ const Q2_TEMPLATE_ITEMS = [
 ];
 
 const Q2_ITEM_META = {
-  cell:     { width: 88, height: 88 },
-  arrow:    { width: 56, height: 34 },
-  xShort:   { width: 36, height: 48 },
-  xLong:    { width: 42, height: 68 },
-  barLong:  { width: 20, height: 66 },
-  barShort: { width: 20, height: 46 },
+  cell:     { width: 76, height: 76 },
+  arrow:    { width: 48, height: 28 },
+  xShort:   { width: 26, height: 34 },
+  xLong:    { width: 28, height: 46 },
+  barLong:  { width: 14, height: 44 },
+  barShort: { width: 14, height: 30 },
 };
 
 let q2Items = [];
@@ -1074,8 +1093,8 @@ function q2CreatePiece(type, context='stage') {
     return wrap;
   }
 
-  const size = context === 'palette' ? 'xs' : 'sm';
-  const barSize = context === 'palette' ? 'xs' : 'sm';
+  const size = context === 'palette' ? 'sm' : 'xs';
+  const barSize = context === 'palette' ? 'sm' : 'xs';
 
   if (type === 'xLong')  { wrap.appendChild(chrXSVG({ size:'long'  }, size)); return wrap; }
   if (type === 'xShort') { wrap.appendChild(chrXSVG({ size:'short' }, size)); return wrap; }
@@ -1376,7 +1395,7 @@ function q2Children_stub(){}
 // INQUIRY 3 — full meiosis flow, 1:1 matching into the correct slots
 // ═══════════════════════════════════════════════════
 const Q3_STAGE_SIZE = { width: 1320, height: 620 };
-const Q3_SLOT_DIM = { lg: 108, md: 88, sm: 74 };
+const Q3_SLOT_DIM = { lg: 74, md: 74, sm: 74 };
 let q3ScaleBound = false;
 
 const Q3_STAGE_SLOTS = [
@@ -2292,6 +2311,10 @@ q3Build();
   let dragOffsetY = 0;
   let dragPlaceholder = null;
   let dragInlineStyle = null;
+  let pendingTouch = null;
+  let pendingTimer = null;
+  const Q3_HOLD_MS = 180;
+  const Q3_MOVE_TOLERANCE = 10;
 
   function isQ3PoolDrag(el) {
     return !!(el && el.classList && el.classList.contains('q3-pool-item'));
@@ -2345,6 +2368,46 @@ q3Build();
       box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     `;
     document.body.appendChild(ghost);
+  }
+
+  function cancelPendingQ3Drag() {
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      pendingTimer = null;
+    }
+    pendingTouch = null;
+  }
+
+  function queuePendingQ3Drag(el, touch) {
+    cancelPendingQ3Drag();
+    pendingTouch = {
+      el,
+      id: el.dataset.id || null,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      currentY: touch.clientY,
+    };
+    if (!pendingTouch.id) {
+      pendingTouch = null;
+      return false;
+    }
+
+    pendingTimer = setTimeout(() => {
+      if (!pendingTouch) return;
+      dragEl = pendingTouch.el;
+      dragId = pendingTouch.id;
+      startDirectTouchDrag(dragEl, {
+        clientX: pendingTouch.currentX,
+        clientY: pendingTouch.currentY,
+      });
+      if (typeof q3DragCandidateId !== 'undefined') {
+        q3DragCandidateId = dragId;
+      }
+      pendingTouch = null;
+      pendingTimer = null;
+    }, Q3_HOLD_MS);
+    return true;
   }
 
   function startDirectTouchDrag(el, touch) {
@@ -2441,6 +2504,7 @@ q3Build();
   }
 
   function clearTouchDragState(restoreOriginal) {
+    cancelPendingQ3Drag();
     clearTouchDragVisual(restoreOriginal);
     if (lastTarget) {
       if (lastTarget.ondragleave) {
@@ -2463,38 +2527,7 @@ q3Build();
     dragOffsetY = 0;
   }
 
-  document.addEventListener('touchstart', function(e) {
-    const touch = e.touches[0];
-    const el = findDraggable(document.elementFromPoint(touch.clientX, touch.clientY));
-    if (!el) return;
-
-    dragEl = el;
-    dragId = el.dataset.id || null;
-    if (!dragId) return;
-
-    if (isQ3PoolDrag(el)) {
-      startDirectTouchDrag(el, touch);
-      if (typeof q3DragCandidateId !== 'undefined') {
-        q3DragCandidateId = dragId;
-      }
-    } else {
-      dragMode = 'ghost';
-      createGhost(el, touch.clientX, touch.clientY);
-      el.style.opacity = '0.3';
-    }
-
-    // Prevent scroll while dragging
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('touchmove', function(e) {
-    if (!dragEl || !dragId) return;
-    e.preventDefault();
-
-    const touch = e.touches[0];
-    moveTouchVisual(touch);
-
-    // Highlight drop target
+  function updateTouchDropTarget(touch) {
     const elUnder = getElAtPoint(touch.clientX, touch.clientY);
     const dropTarget = findDropTarget(elUnder);
 
@@ -2516,9 +2549,62 @@ q3Build();
       }
     }
     lastTarget = dropTarget;
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    const touch = e.touches[0];
+    if (!touch) return;
+    const el = findDraggable(document.elementFromPoint(touch.clientX, touch.clientY));
+    if (!el) return;
+
+    if (isQ3PoolDrag(el)) {
+      queuePendingQ3Drag(el, touch);
+      return;
+    }
+
+    dragEl = el;
+    dragId = el.dataset.id || null;
+    if (!dragId) return;
+
+    dragMode = 'ghost';
+    createGhost(el, touch.clientX, touch.clientY);
+    el.style.opacity = '0.3';
+
+    // Prevent scroll while dragging
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', function(e) {
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    if (pendingTouch && !dragEl) {
+      pendingTouch.currentX = touch.clientX;
+      pendingTouch.currentY = touch.clientY;
+
+      const moved = Math.hypot(
+        touch.clientX - pendingTouch.startX,
+        touch.clientY - pendingTouch.startY
+      );
+
+      if (moved > Q3_MOVE_TOLERANCE) {
+        cancelPendingQ3Drag();
+      }
+      return;
+    }
+
+    if (!dragEl || !dragId) return;
+    e.preventDefault();
+
+    moveTouchVisual(touch);
+    updateTouchDropTarget(touch);
   }, { passive: false });
 
   function finishTouchDrag(e) {
+    if (pendingTouch && !dragEl) {
+      cancelPendingQ3Drag();
+      return;
+    }
     if (!dragEl || !dragId) return;
 
     const touch = e.changedTouches[0];
