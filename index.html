@@ -1637,7 +1637,7 @@ function q3Dim(sizeKey) {
 }
 
 function q3ImageUrl(fileName) {
-  return encodeURI('./images/' + fileName);
+  return encodeURI('./images/' + fileName.replace(/\.png$/i, '.webp'));
 }
 
 function q3ChrPairSVG(item, size) {
@@ -1799,24 +1799,18 @@ function q3CreateCandidateVisual(candidate, dim, mode='pool') {
   outer.style.width = dim + 'px';
   outer.style.height = dim + 'px';
 
-  if (candidate.kind === 'sperm') {
-    const sperm = q3CreateSpermSVG(Math.max(40, Math.round(dim * (mode === 'stage' ? 1.02 : 1.12))));
-    sperm.classList.add('q3-visual-svg');
-    outer.appendChild(sperm);
-    return outer;
-  }
-
-  const cellVisual = q3CreateCellVisual(candidate, dim, mode);
-  if (cellVisual) {
-    outer.appendChild(cellVisual);
-    return outer;
-  }
-
   const img = document.createElement('img');
   img.className = 'q3-visual-img';
   img.src = q3ImageUrl(candidate.fileName);
   img.alt = candidate.label;
   img.draggable = false;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  img.addEventListener('error', () => {
+    if (img.dataset.fallbackDone === '1') return;
+    img.dataset.fallbackDone = '1';
+    img.src = encodeURI('./images/' + candidate.fileName);
+  }, { once:true });
   outer.appendChild(img);
   return outer;
 }
