@@ -667,8 +667,9 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
     min-width:max-content;
     grid-auto-flow:column;
     grid-template-columns:none;
-    grid-template-rows:repeat(2, minmax(96px, auto));
-    grid-auto-columns:96px;
+    grid-template-rows:repeat(2, minmax(78px, auto));
+    grid-auto-columns:78px;
+    gap:10px 8px;
     justify-items:center;
   }
 }
@@ -2010,9 +2011,9 @@ function q3ViewportWidth() {
 
 function q3PoolDisplayScale() {
   const vw = q3ViewportWidth();
-  if (vw <= 480) return 0.68;
-  if (vw <= 768) return 0.76;
-  if (vw <= 1024) return 0.88;
+  if (vw <= 480) return 0.52;
+  if (vw <= 768) return 0.60;
+  if (vw <= 1024) return 0.72;
   return 1;
 }
 
@@ -2025,14 +2026,14 @@ function q3StageViewportScale() {
 }
 
 function q3PoolItemDim(candidate) {
-  return Math.max(54, Math.round(candidate.poolDim * q3PoolDisplayScale()));
+  return Math.max(42, Math.round(candidate.poolDim * q3PoolDisplayScale()));
 }
 
 function q3TouchDragScale() {
   const vw = q3ViewportWidth();
-  if (vw <= 480) return 0.58;
-  if (vw <= 768) return 0.68;
-  if (vw <= 1024) return 0.78;
+  if (vw <= 480) return 0.42;
+  if (vw <= 768) return 0.50;
+  if (vw <= 1024) return 0.62;
   return 1;
 }
 
