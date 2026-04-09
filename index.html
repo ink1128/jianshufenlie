@@ -2014,14 +2014,22 @@ function q3PoolDisplayScale() {
 
 function q3StageViewportScale() {
   const vw = q3ViewportWidth();
-  if (vw <= 480) return 0.78;
-  if (vw <= 768) return 0.86;
-  if (vw <= 1024) return 0.93;
+  if (vw <= 480) return 0.90;
+  if (vw <= 768) return 0.95;
+  if (vw <= 1024) return 0.98;
   return 1;
 }
 
 function q3PoolItemDim(candidate) {
   return Math.max(54, Math.round(candidate.poolDim * q3PoolDisplayScale()));
+}
+
+function q3TouchDragScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.72;
+  if (vw <= 768) return 0.80;
+  if (vw <= 1024) return 0.88;
+  return 1;
 }
 
 function q3StageScaleFactor(count) {
@@ -3196,10 +3204,18 @@ q2Build();
   function startDirectTouchDrag(el, touch) {
     const rect = el.getBoundingClientRect();
     const computed = window.getComputedStyle(el);
+    const shrinkForTouch = isQ3PoolDrag(el);
+    const dragScale = shrinkForTouch ? q3TouchDragScale() : 1;
+    const scaledWidth = rect.width * dragScale;
+    const scaledHeight = rect.height * dragScale;
+    const baseOffsetX = touch.clientX - rect.left;
+    const baseOffsetY = touch.clientY - rect.top;
+    const startLeft = rect.left + (rect.width - scaledWidth) / 2;
+    const startTop = rect.top + (rect.height - scaledHeight) / 2;
 
     dragMode = 'direct';
-    dragOffsetX = touch.clientX - rect.left;
-    dragOffsetY = touch.clientY - rect.top;
+    dragOffsetX = shrinkForTouch ? baseOffsetX * dragScale : baseOffsetX;
+    dragOffsetY = shrinkForTouch ? baseOffsetY * dragScale : baseOffsetY;
     dragInlineStyle = {
       position: el.style.position,
       left: el.style.left,
@@ -3226,10 +3242,10 @@ q2Build();
     }
 
     el.style.position = 'fixed';
-    el.style.left = rect.left + 'px';
-    el.style.top = rect.top + 'px';
-    el.style.width = rect.width + 'px';
-    el.style.height = rect.height + 'px';
+    el.style.left = startLeft + 'px';
+    el.style.top = startTop + 'px';
+    el.style.width = scaledWidth + 'px';
+    el.style.height = scaledHeight + 'px';
     el.style.zIndex = '9999';
     el.style.pointerEvents = 'none';
     el.style.margin = '0';
