@@ -398,14 +398,14 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   min-width:max-content;
   align-items:center;
   justify-content:flex-start;
-  padding:14px 6px 16px 2px;
+  padding:10px 6px 10px 2px;
 }
 .q4-pool-item{
   display:flex;
   align-items:center;
   justify-content:center;
   min-width:24px;
-  min-height:104px;
+  min-height:86px;
   line-height:0;
   border:none;
   background:none;
@@ -703,7 +703,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   }
   .q4-pool{
     gap:6px;
-    padding:12px 4px 14px 2px;
+    padding:8px 4px 10px 2px;
   }
 }
 </style>
@@ -723,7 +723,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 <!-- ══ 探究一 ══ -->
 <div class="tab-pane active" id="tab0">
   <div class="card">
-    <div class="card-title">精子的染色体数目如何减半</div>
+    <div class="card-title">精子形成的方式</div>
     <div class="diagram-scroll">
       <div class="q1-layout">
         <div class="q1-stage">
@@ -757,7 +757,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 <!-- ══ 探究二 ══ -->
 <div class="tab-pane" id="tab1">
   <div class="card">
-    <div class="card-title">精子的染色体数目如何规律减半</div>
+    <div class="card-title">精子形成的大致过程</div>
     <div class="diagram-scroll">
       <div class="q2-layout">
         <div class="q2-stage" id="q2-stage">
@@ -783,7 +783,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 <!-- ══ 探究三 ══ -->
 <div class="tab-pane" id="tab2">
   <div class="card">
-    <div class="card-title">哺乳动物精子的形成过程</div>
+    <div class="card-title">姐妹染色单体精准分离的过程</div>
     <div class="q3-layout">
       <div class="q3-flow-wrap">
         <div class="diagram-scroll">
@@ -3549,12 +3549,19 @@ function q4RenderPool() {
 
   const used = new Set(q4CollectUsedCandidateIds());
   Q4_POOL_ITEMS.filter(item => !used.has(item.id)).forEach(candidate => {
+    const dim = q4PoolItemDim(candidate);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'q4-pool-item';
     btn.draggable = true;
     btn.dataset.id = candidate.id;
-    btn.appendChild(q4CreateCandidateVisual(candidate, q4PoolItemDim(candidate), 'pool'));
+    btn.appendChild(q4CreateCandidateVisual(candidate, dim, 'pool'));
+
+    if (candidate.shape === 'cross' && !candidate.rot) {
+      const vw = q3ViewportWidth();
+      const extra = vw <= 480 ? 18 : vw <= 768 ? 14 : 8;
+      btn.style.width = (dim + extra) + 'px';
+    }
 
     btn.addEventListener('dragstart', e => {
       q4DragCandidateId = candidate.id;
