@@ -386,6 +386,10 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   touch-action:manipulation;
 }
 .q3-pool-item.dragging{opacity:.35;}
+.q3-pool-item.q3-touch-dragging .q3-visual{
+  transform:scale(var(--q3-touch-drag-scale, 1));
+  transform-origin:center center;
+}
 .q3-visual{
   position:relative;
   display:flex;
@@ -2026,9 +2030,9 @@ function q3PoolItemDim(candidate) {
 
 function q3TouchDragScale() {
   const vw = q3ViewportWidth();
-  if (vw <= 480) return 0.72;
-  if (vw <= 768) return 0.80;
-  if (vw <= 1024) return 0.88;
+  if (vw <= 480) return 0.58;
+  if (vw <= 768) return 0.68;
+  if (vw <= 1024) return 0.78;
   return 1;
 }
 
@@ -3206,16 +3210,10 @@ q2Build();
     const computed = window.getComputedStyle(el);
     const shrinkForTouch = isQ3PoolDrag(el);
     const dragScale = shrinkForTouch ? q3TouchDragScale() : 1;
-    const scaledWidth = rect.width * dragScale;
-    const scaledHeight = rect.height * dragScale;
-    const baseOffsetX = touch.clientX - rect.left;
-    const baseOffsetY = touch.clientY - rect.top;
-    const startLeft = rect.left + (rect.width - scaledWidth) / 2;
-    const startTop = rect.top + (rect.height - scaledHeight) / 2;
 
     dragMode = 'direct';
-    dragOffsetX = shrinkForTouch ? baseOffsetX * dragScale : baseOffsetX;
-    dragOffsetY = shrinkForTouch ? baseOffsetY * dragScale : baseOffsetY;
+    dragOffsetX = touch.clientX - rect.left;
+    dragOffsetY = touch.clientY - rect.top;
     dragInlineStyle = {
       position: el.style.position,
       left: el.style.left,
@@ -3242,16 +3240,20 @@ q2Build();
     }
 
     el.style.position = 'fixed';
-    el.style.left = startLeft + 'px';
-    el.style.top = startTop + 'px';
-    el.style.width = scaledWidth + 'px';
-    el.style.height = scaledHeight + 'px';
+    el.style.left = rect.left + 'px';
+    el.style.top = rect.top + 'px';
+    el.style.width = rect.width + 'px';
+    el.style.height = rect.height + 'px';
     el.style.zIndex = '9999';
     el.style.pointerEvents = 'none';
     el.style.margin = '0';
     el.style.transition = 'none';
     el.style.transform = 'none';
     el.style.boxShadow = '0 12px 28px rgba(15,23,42,.18)';
+    if (shrinkForTouch) {
+      el.classList.add('q3-touch-dragging');
+      el.style.setProperty('--q3-touch-drag-scale', String(dragScale));
+    }
   }
 
   function moveTouchVisual(touch) {
@@ -3284,6 +3286,8 @@ q2Build();
       dragPlaceholder = null;
 
       if (dragInlineStyle) {
+        dragEl.classList.remove('q3-touch-dragging');
+        dragEl.style.removeProperty('--q3-touch-drag-scale');
         dragEl.style.position = dragInlineStyle.position;
         dragEl.style.left = dragInlineStyle.left;
         dragEl.style.top = dragInlineStyle.top;
