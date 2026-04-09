@@ -1996,6 +1996,34 @@ function q3AutoCenters(count) {
   return centers;
 }
 
+function q3ViewportWidth() {
+  return Math.max(
+    window.innerWidth || 0,
+    document.documentElement ? document.documentElement.clientWidth : 0,
+    0
+  );
+}
+
+function q3PoolDisplayScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.68;
+  if (vw <= 768) return 0.76;
+  if (vw <= 1024) return 0.88;
+  return 1;
+}
+
+function q3StageViewportScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.78;
+  if (vw <= 768) return 0.86;
+  if (vw <= 1024) return 0.93;
+  return 1;
+}
+
+function q3PoolItemDim(candidate) {
+  return Math.max(54, Math.round(candidate.poolDim * q3PoolDisplayScale()));
+}
+
 function q3StageScaleFactor(count) {
   if (count <= 1) return 0.40;
   if (count === 2) return 0.31;
@@ -2005,9 +2033,12 @@ function q3StageScaleFactor(count) {
 }
 
 function q3PlacedItemDim(candidate, slotDim, count) {
-  const maxDim = Math.round(slotDim * (count <= 1 ? 0.60 : count === 2 ? 0.54 : count <= 4 ? 0.47 : 0.40));
-  const scaled = Math.round(candidate.poolDim * q3StageScaleFactor(count));
-  return Math.max(18, Math.min(maxDim, scaled));
+  const deviceScale = q3StageViewportScale();
+  const maxDim = Math.round(
+    slotDim * (count <= 1 ? 0.60 : count === 2 ? 0.54 : count <= 4 ? 0.47 : 0.40) * deviceScale
+  );
+  const scaled = Math.round(candidate.poolDim * q3StageScaleFactor(count) * deviceScale);
+  return Math.max(16, Math.min(maxDim, scaled));
 }
 
 function q3ResolveStageItemPos(item, itemDim, slotDim, autoPos) {
@@ -2687,7 +2718,7 @@ function q3RenderPool() {
     btn.className = 'q3-pool-item';
     btn.draggable = true;
     btn.dataset.id = candidate.id;
-    btn.appendChild(q3CreateCandidateVisual(candidate, candidate.poolDim, 'pool'));
+    btn.appendChild(q3CreateCandidateVisual(candidate, q3PoolItemDim(candidate), 'pool'));
 
     btn.addEventListener('dragstart', e => {
       q3DragCandidateId = candidate.id;
