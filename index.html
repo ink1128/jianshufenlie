@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"/>
@@ -37,7 +37,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 .cell.wrong{border-color:#ef4444!important;animation:shake .35s;}
 @keyframes pop{0%{transform:scale(.88)}55%{transform:scale(1.05)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-/* Cell inner — scale content to fit */
+/* Cell inner 鈥?scale content to fit */
 .cell-inner{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;width:100%;height:100%;padding:8px 6px;overflow:hidden;}
 /* Labels */
 .cell-label{font-size:clamp(11px,1.8vw,14px);font-weight:700;text-align:center;line-height:1.3;}
@@ -295,7 +295,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   position:relative;
   width:100%;
   max-width:1320px;
-  height:620px;
+  height:430px;
   margin:0 auto;
 }
 .q3-stage-fit > .q3-stage{
@@ -305,8 +305,8 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 }
 .q3-stage{
   position:relative;
-  width:1320px;
-  height:620px;
+  width:1280px;
+  height:430px;
   border-radius:24px;
   background:#fff;
   overflow:hidden;
@@ -348,9 +348,9 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   transition:border-color .2s, box-shadow .2s, transform .2s, background .2s;
 }
 .q3-stage-slot.can-drop{
-  border-color:#0ea5e9;
-  box-shadow:0 0 0 4px rgba(14,165,233,.18);
-  transform:scale(1.03);
+  border-color:#111827;
+  box-shadow:none;
+  transform:none;
 }
 .q3-stage-slot.filled{background:rgba(255,255,255,.985);}
 .q3-stage-slot.correct{
@@ -368,6 +368,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   line-height:1.6;
   color:#475569;
 }
+.q3-palette-note{display:none;}
 .q3-pool{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(96px, 1fr));
@@ -391,6 +392,67 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   align-items:center;
   justify-content:center;
   line-height:0;
+}
+.q3-visual-artboard{
+  position:relative;
+  width:100px;
+  height:100px;
+  transform-origin:top left;
+  pointer-events:none;
+}
+.q3-visual-disc{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:#fff;
+  border:2.5px solid #111827;
+  box-sizing:border-box;
+}
+.q3-visual-stage .q3-visual-disc{
+  background:transparent;
+  border:none;
+}
+.q3-visual-chr{
+  position:absolute;
+  transform-origin:center center;
+}
+.q3-stage-slot.preset{
+  background:rgba(255,255,255,.99);
+}
+.q3-stage-remove{
+  position:absolute;
+  top:-1px;
+  right:-1px;
+  width:9px;
+  height:9px;
+  border:none;
+  border-radius:999px;
+  background:#0f172a;
+  color:#fff;
+  font-size:6px;
+  line-height:1;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 4px rgba(15,23,42,.14);
+  z-index:3;
+}
+.q3-stage-item{
+  position:absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.q3-stage-item:active{cursor:grabbing;}
+.q3-stage-item .q3-visual{pointer-events:none;}
+.q3-stage-item .q3-stage-remove{pointer-events:auto;}
+.q3-stage-item.locked{
+  cursor:default;
+  touch-action:auto;
 }
 .q3-visual-frame{
   position:relative;
@@ -1417,226 +1479,621 @@ function q2Children_stub(){}
 // ═══════════════════════════════════════════════════
 // INQUIRY 3 — full meiosis flow, 1:1 matching into the correct slots
 // ═══════════════════════════════════════════════════
-const Q3_STAGE_SIZE = { width: 1320, height: 620 };
+const Q3_STAGE_SIZE = { width: 1320, height: 430 };
 const Q3_SLOT_DIM = { lg: 74, md: 74, sm: 74 };
 let q3ScaleBound = false;
 let q3Built = false;
 
 const Q3_STAGE_SLOTS = [
-  { id:'s0',  kind:'nucleusSimple',  size:'lg', x:37,   y:207, name:'精原细胞',             error:'❌ 这里应放入精原细胞的核内染色质状态。' },
-  { id:'s1',  kind:'nucleusComplex', size:'md', x:147,  y:207, name:'复制后细胞核',         error:'❌ 这里应放入复制后的细胞核状态。' },
-  { id:'s2',  kind:'prophase1',      size:'md', x:267,  y:207, name:'初级精母细胞前期',     error:'❌ 这里对应初级精母细胞前期。' },
-  { id:'s3',  kind:'metaphase1',     size:'md', x:387,  y:207, name:'初级精母细胞中期',     error:'❌ 这里对应初级精母细胞中期。' },
-  { id:'s4',  kind:'anaphase1',      size:'md', x:507,  y:207, name:'初级精母细胞后期',     error:'❌ 这里对应初级精母细胞后期。' },
-  { id:'s5',  kind:'secProA',        size:'md', x:657,  y:67,  name:'次级精母细胞末/前期A', error:'❌ 这里应放入“红长双杆 + 蓝短双杆”的次级精母细胞。' },
-  { id:'s6',  kind:'secProB',        size:'md', x:657,  y:347, name:'次级精母细胞前期B',    error:'❌ 这里应放入“蓝长双杆 + 红短双杆”的次级精母细胞。' },
-  { id:'s7',  kind:'meta2A',         size:'lg', x:787,  y:67,  name:'次级精母细胞中期A',    error:'❌ 这里对应“红长双杆 + 蓝短双杆”组合的中期。' },
-  { id:'s8',  kind:'meta2B',         size:'md', x:787,  y:347, name:'次级精母细胞中期B',    error:'❌ 这里对应“蓝长双杆 + 红短双杆”组合的中期。' },
-  { id:'s9',  kind:'ana2A',          size:'md', x:917,  y:67,  name:'次级精母细胞后期A',    error:'❌ 这里对应“红长 + 蓝短”分离的后期。' },
-  { id:'s10', kind:'ana2B',          size:'md', x:917,  y:347, name:'次级精母细胞后期B',    error:'❌ 这里对应“蓝长 + 红短”分离的后期。' },
-  { id:'s11', kind:'spermatidB',     size:'md', x:1087, y:327, name:'精细胞①',             error:'❌ 这里应放入“蓝长 + 红短”的精细胞。' },
-  { id:'s12', kind:'spermatidB',     size:'md', x:1087, y:487, name:'精细胞②',             error:'❌ 这里应放入“蓝长 + 红短”的精细胞。' },
-  { id:'s13', kind:'spermatidA',     size:'md', x:1087, y:27,  name:'精细胞③',             error:'❌ 这里应放入“红长 + 蓝短”的精细胞。' },
-  { id:'s14', kind:'spermatidA',     size:'md', x:1087, y:167, name:'精细胞④',             error:'❌ 这里应放入“红长 + 蓝短”的精细胞。' },
-  { id:'s15', kind:'sperm',          size:'sm', x:1210, y:327, name:'精子①',               error:'❌ 这里只能放入精子。' },
-  { id:'s16', kind:'sperm',          size:'sm', x:1210, y:487, name:'精子②',               error:'❌ 这里只能放入精子。' },
-  { id:'s17', kind:'sperm',          size:'sm', x:1210, y:27,  name:'精子③',               error:'❌ 这里只能放入精子。' },
-  { id:'s18', kind:'sperm',          size:'sm', x:1210, y:167, name:'精子④',               error:'❌ 这里只能放入精子。' },
+  { id:'s0',  kind:'nucleusSimple',  size:'lg', x:6,    y:120, name:'精原细胞',         error:'这里应放入精原细胞。' },
+  { id:'s1',  kind:'nucleusComplex', size:'md', x:176,  y:120, name:'复制后细胞核',     error:'这里应放入复制后细胞核。' },
+  { id:'s2',  kind:'prophase1',      size:'md', x:336,  y:120, name:'减数分裂I前期',    error:'这里对应减数分裂I前期。' },
+  { id:'s3',  kind:'metaphase1',     size:'md', x:496,  y:120, name:'减数分裂I中期',    error:'这里对应减数分裂I中期。' },
+  { id:'s4',  kind:'anaphase1',      size:'md', x:656,  y:120, name:'减数分裂I后期',    error:'这里对应减数分裂I后期。' },
+  { id:'s5',  kind:'secProA',        size:'md', x:786,  y:48,  name:'减数分裂II前期A',  error:'这里应放入上方分支前期。' },
+  { id:'s6',  kind:'meta2A',         size:'md', x:926,  y:48,  name:'减数分裂II中期A',  error:'这里应放入上方分支中期。' },
+  { id:'s7',  kind:'ana2A',          size:'md', x:1066, y:48,  name:'减数分裂II后期A',  error:'这里应放入上方分支后期。' },
+  { id:'s8',  kind:'secProB',        size:'md', x:786,  y:208, name:'减数分裂II前期B',  error:'这里应放入下方分支前期。' },
+  { id:'s9',  kind:'meta2B',         size:'md', x:926,  y:208, name:'减数分裂II中期B',  error:'这里应放入下方分支中期。' },
+  { id:'s10', kind:'ana2B',          size:'md', x:1066, y:208, name:'减数分裂II后期B',  error:'这里应放入下方分支后期。' },
+  { id:'s11', kind:'spermatidA',     size:'md', x:1188, y:6,   name:'精细胞A1',         error:'这里应放入上方精细胞。' },
+  { id:'s12', kind:'spermatidA',     size:'md', x:1188, y:86,  name:'精细胞A2',         error:'这里应放入上方精细胞。' },
+  { id:'s13', kind:'spermatidB',     size:'md', x:1188, y:168, name:'精细胞B1',         error:'这里应放入下方精细胞。' },
+  { id:'s14', kind:'spermatidB',     size:'md', x:1188, y:248, name:'精细胞B2',         error:'这里应放入下方精细胞。' },
 ];
 
 const Q3_STAGE_BACKDROPS = [];
 
 const Q3_STAGE_LINKS = [
-  { d:'M 111 244 L 147 244' },
-  { d:'M 221 244 L 267 244' },
-  { d:'M 341 244 L 387 244' },
-  { d:'M 461 244 L 507 244' },
-  { d:'M 581 244 L 605 244 L 605 104 L 657 104' },
-  { d:'M 581 244 L 605 244 L 605 384 L 657 384' },
-  { d:'M 731 104 L 787 104' },
-  { d:'M 861 104 L 917 104' },
-  { d:'M 731 384 L 787 384' },
-  { d:'M 861 384 L 917 384' },
-  { d:'M 991 104 L 1039 104 L 1039 64 L 1087 64' },
-  { d:'M 991 104 L 1039 104 L 1039 204 L 1087 204' },
-  { d:'M 991 384 L 1039 384 L 1039 364 L 1087 364' },
-  { d:'M 991 384 L 1039 384 L 1039 524 L 1087 524' },
-  { d:'M 1161 64 L 1210 64' },
-  { d:'M 1161 204 L 1210 204' },
-  { d:'M 1161 364 L 1210 364' },
-  { d:'M 1161 524 L 1210 524' },
+  { d:'M 80 157 L 176 157' },
+  { d:'M 250 157 L 336 157' },
+  { d:'M 410 157 L 496 157' },
+  { d:'M 570 157 L 656 157' },
+  { d:'M 730 157 L 760 157 L 760 85 L 786 85' },
+  { d:'M 730 157 L 760 157 L 760 245 L 786 245' },
+  { d:'M 860 85 L 926 85' },
+  { d:'M 1000 85 L 1066 85' },
+  { d:'M 860 245 L 926 245' },
+  { d:'M 1000 245 L 1066 245' },
+  { d:'M 1140 85 L 1162 85 L 1162 43 L 1188 43' },
+  { d:'M 1140 85 L 1162 85 L 1162 123 L 1188 123' },
+  { d:'M 1140 245 L 1162 245 L 1162 205 L 1188 205' },
+  { d:'M 1140 245 L 1162 245 L 1162 285 L 1188 285' },
 ];
 
 const Q3_VISUAL_LIBRARY = {
   nucleusSimple: {
-    nucleus:'simple',
-    spindle:false,
-    cleavage:false,
-    chroms:[],
+    chroms:[
+      { shape:'bar',  size:'long',  col:'red',  x:24, y:50, rot:90, poolSize:'sm' },
+      { shape:'bar',  size:'long',  col:'blue', x:42, y:50, rot:90, poolSize:'sm' },
+      { shape:'bar',  size:'short', col:'red',  x:62, y:50, rot:90, poolSize:'sm' },
+      { shape:'bar',  size:'short', col:'blue', x:78, y:50, rot:90, poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'bar', size:'long',  col:'red',  x:34, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'long',  col:'blue', x:46, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'red',  x:58, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'blue', x:68, y:50, rot:90, stageSize:'stage' },
+    ],
   },
   nucleusComplex: {
-    nucleus:'complex',
-    spindle:false,
-    cleavage:false,
-    chroms:[],
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:36, y:34, rot:-36, poolSize:'sm' },
+      { shape:'pair', size:'long',  col:'blue', x:64, y:66, rot:36,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'red',  x:70, y:30, rot:-18, poolSize:'sm' },
+      { shape:'pair', size:'short', col:'blue', x:30, y:70, rot:18,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'red',  x:40, y:40, rot:-32, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'red',  x:58, y:39, rot:-12, stageSize:'stage' },
+      { shape:'pair', size:'long',  col:'blue', x:60, y:60, rot:32,  stageSize:'stage' },
+      { shape:'pair', size:'short', col:'blue', x:42, y:61, rot:12,  stageSize:'stage' },
+    ],
   },
   prophase1: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'red',  x:18, y:18, rot:-18 },
-      { shape:'pair', size:'long',  col:'blue', x:42, y:16, rot:12  },
-      { shape:'pair', size:'short', col:'red',  x:60, y:54, rot:-12 },
-      { shape:'pair', size:'short', col:'blue', x:80, y:54, rot:18  },
+      { shape:'pair', size:'long',  col:'red',  x:28, y:28, rot:-28, poolSize:'sm' },
+      { shape:'pair', size:'long',  col:'blue', x:72, y:72, rot:28,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'red',  x:70, y:28, rot:18,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'blue', x:30, y:72, rot:-18, poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'red',  x:39, y:40, rot:-32, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'red',  x:58, y:39, rot:-16, stageSize:'stage' },
+      { shape:'pair', size:'long',  col:'blue', x:61, y:60, rot:32,  stageSize:'stage' },
+      { shape:'pair', size:'short', col:'blue', x:42, y:61, rot:16,  stageSize:'stage' },
     ],
   },
   metaphase1: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'red',  x:18, y:22, rot:0 },
-      { shape:'pair', size:'long',  col:'blue', x:44, y:22, rot:0 },
-      { shape:'pair', size:'short', col:'red',  x:30, y:58, rot:0 },
-      { shape:'pair', size:'short', col:'blue', x:54, y:58, rot:0 },
+      { shape:'pair', size:'long',  col:'red',  x:42, y:34, rot:2,  poolSize:'sm' },
+      { shape:'pair', size:'long',  col:'blue', x:58, y:34, rot:-2, poolSize:'sm' },
+      { shape:'pair', size:'short', col:'red',  x:44, y:66, rot:0,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'blue', x:56, y:66, rot:0,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'red',  x:44, y:40, rot:0, stageSize:'stage' },
+      { shape:'pair', size:'long',  col:'blue', x:56, y:40, rot:0, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'red',  x:46, y:60, rot:0, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'blue', x:54, y:60, rot:0, stageSize:'stage' },
     ],
   },
   anaphase1: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'red',  x:18, y:14, rot:-16 },
-      { shape:'pair', size:'short', col:'blue', x:78, y:22, rot:8   },
-      { shape:'pair', size:'long',  col:'blue', x:18, y:60, rot:16  },
-      { shape:'pair', size:'short', col:'red',  x:78, y:70, rot:-8  },
+      { shape:'pair', size:'long',  col:'red',  x:24, y:34, rot:-28, poolSize:'sm' },
+      { shape:'pair', size:'short', col:'red',  x:34, y:68, rot:-14, poolSize:'sm' },
+      { shape:'pair', size:'long',  col:'blue', x:76, y:66, rot:28,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'blue', x:66, y:30, rot:14,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'red',  x:38, y:42, rot:-32, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'red',  x:43, y:58, rot:-16, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'blue', x:57, y:42, rot:16,  stageSize:'stage' },
+      { shape:'pair', size:'long',  col:'blue', x:62, y:58, rot:32,  stageSize:'stage' },
     ],
   },
   secProA: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'red',  x:18, y:18, rot:-18 },
-      { shape:'pair', size:'short', col:'blue', x:78, y:58, rot:10  },
+      { shape:'pair', size:'long',  col:'red', x:42, y:38, rot:-34, poolSize:'sm' },
+      { shape:'pair', size:'short', col:'red', x:64, y:58, rot:22,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'red', x:46, y:44, rot:-32, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'red', x:57, y:57, rot:18,  stageSize:'stage' },
     ],
   },
   secProB: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'blue', x:18, y:18, rot:-18 },
-      { shape:'pair', size:'short', col:'red',  x:78, y:58, rot:10  },
+      { shape:'pair', size:'long',  col:'blue', x:42, y:38, rot:-34, poolSize:'sm' },
+      { shape:'pair', size:'short', col:'blue', x:64, y:58, rot:22,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'blue', x:46, y:44, rot:-32, stageSize:'stage' },
+      { shape:'pair', size:'short', col:'blue', x:57, y:57, rot:18,  stageSize:'stage' },
     ],
   },
   meta2A: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'red',  x:24, y:28, rot:0 },
-      { shape:'pair', size:'short', col:'blue', x:76, y:40, rot:0 },
+      { shape:'pair', size:'long',  col:'red', x:50, y:34, rot:8,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'red', x:50, y:66, rot:-4, poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'red', x:50, y:43, rot:6,  stageSize:'stage' },
+      { shape:'pair', size:'short', col:'red', x:50, y:59, rot:-6, stageSize:'stage' },
     ],
   },
   meta2B: {
-    spindle:true,
-    cleavage:false,
     chroms:[
-      { shape:'pair', size:'long',  col:'blue', x:24, y:28, rot:0 },
-      { shape:'pair', size:'short', col:'red',  x:76, y:40, rot:0 },
+      { shape:'pair', size:'long',  col:'blue', x:50, y:34, rot:8,  poolSize:'sm' },
+      { shape:'pair', size:'short', col:'blue', x:50, y:66, rot:-4, poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'pair', size:'long',  col:'blue', x:50, y:43, rot:6,  stageSize:'stage' },
+      { shape:'pair', size:'short', col:'blue', x:50, y:59, rot:-6, stageSize:'stage' },
     ],
   },
   ana2A: {
-    spindle:true,
-    cleavage:true,
     chroms:[
-      { shape:'bar', size:'long',  col:'red',  x:22, y:28, rot:0 },
-      { shape:'bar', size:'long',  col:'red',  x:82, y:28, rot:0 },
-      { shape:'bar', size:'short', col:'blue', x:38, y:62, rot:0 },
-      { shape:'bar', size:'short', col:'blue', x:92, y:62, rot:0 },
+      { shape:'bar', size:'long',  col:'red', x:30, y:34, rot:-18, poolSize:'sm' },
+      { shape:'bar', size:'long',  col:'red', x:70, y:66, rot:18,  poolSize:'sm' },
+      { shape:'bar', size:'short', col:'red', x:36, y:68, rot:-12, poolSize:'sm' },
+      { shape:'bar', size:'short', col:'red', x:64, y:30, rot:12,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'bar', size:'long',  col:'red', x:40, y:42, rot:-24, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'red', x:45, y:58, rot:-12, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'red', x:55, y:42, rot:12,  stageSize:'stage' },
+      { shape:'bar', size:'long',  col:'red', x:60, y:58, rot:24,  stageSize:'stage' },
     ],
   },
   ana2B: {
-    spindle:true,
-    cleavage:true,
     chroms:[
-      { shape:'bar', size:'long',  col:'blue', x:22, y:28, rot:0 },
-      { shape:'bar', size:'long',  col:'blue', x:82, y:28, rot:0 },
-      { shape:'bar', size:'short', col:'red',  x:38, y:62, rot:0 },
-      { shape:'bar', size:'short', col:'red',  x:92, y:62, rot:0 },
+      { shape:'bar', size:'long',  col:'blue', x:30, y:34, rot:-18, poolSize:'sm' },
+      { shape:'bar', size:'long',  col:'blue', x:70, y:66, rot:18,  poolSize:'sm' },
+      { shape:'bar', size:'short', col:'blue', x:36, y:68, rot:-12, poolSize:'sm' },
+      { shape:'bar', size:'short', col:'blue', x:64, y:30, rot:12,  poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'bar', size:'long',  col:'blue', x:40, y:42, rot:-24, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'blue', x:45, y:58, rot:-12, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'blue', x:55, y:42, rot:12,  stageSize:'stage' },
+      { shape:'bar', size:'long',  col:'blue', x:60, y:58, rot:24,  stageSize:'stage' },
     ],
   },
   spermatidA: {
-    spindle:false,
-    cleavage:false,
     chroms:[
-      { shape:'bar', size:'long',  col:'red',  x:44, y:18, rot:0 },
-      { shape:'bar', size:'short', col:'blue', x:80, y:36, rot:0 },
+      { shape:'bar', size:'long',  col:'red', x:44, y:48, rot:90, poolSize:'sm' },
+      { shape:'bar', size:'short', col:'red', x:62, y:48, rot:90, poolSize:'sm' },
+    ],
+    stageChroms:[
+      { shape:'bar', size:'long',  col:'red', x:47, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'red', x:58, y:50, rot:90, stageSize:'stage' },
     ],
   },
   spermatidB: {
-    spindle:false,
-    cleavage:false,
     chroms:[
-      { shape:'bar', size:'long',  col:'blue', x:44, y:18, rot:0 },
-      { shape:'bar', size:'short', col:'red',  x:80, y:36, rot:0 },
+      { shape:'bar', size:'long',  col:'blue', x:44, y:48, rot:90, poolSize:'sm' },
+      { shape:'bar', size:'short', col:'blue', x:62, y:48, rot:90, poolSize:'sm' },
     ],
+    stageChroms:[
+      { shape:'bar', size:'long',  col:'blue', x:47, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'short', col:'blue', x:58, y:50, rot:90, stageSize:'stage' },
+    ],
+  },
+  poolChrom1: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom2: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom3: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom4: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom5: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom6: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom7: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom8: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom9: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom10: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom11: {
+    chroms:[],
+    stageChroms:[],
+  },
+  poolChrom12: {
+    chroms:[],
+    stageChroms:[],
   },
 };
 
 const Q3_CANDIDATES = [
-  { id:'q3-c01', kind:'nucleusComplex', poolDim:88, label:'复制后核内染色质细胞', fileName:'图片 5.png' },
-  { id:'q3-c02', kind:'prophase1',      poolDim:88, label:'初级精母细胞前期',     fileName:'图片 4.png' },
-  { id:'q3-c03', kind:'anaphase1',      poolDim:88, label:'初级精母细胞后期',     fileName:'图片 3.png' },
-  { id:'q3-c04', kind:'metaphase1',     poolDim:88, label:'初级精母细胞中期',     fileName:'图片 2.png' },
-  { id:'q3-c05', kind:'spermatidA',     poolDim:84, label:'红长蓝短精细胞',       fileName:'图片 12.png' },
-  { id:'q3-c06', kind:'ana2A',          poolDim:88, label:'次级精母细胞后期A',    fileName:'图片 10.png' },
-  { id:'q3-c07', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 16.png' },
-  { id:'q3-c08', kind:'secProA',        poolDim:84, label:'次级精母细胞末前期A',  fileName:'图片 1.png' },
-  { id:'q3-c09', kind:'spermatidB',     poolDim:84, label:'蓝长红短精细胞',       fileName:'图片 14.png' },
-  { id:'q3-c10', kind:'nucleusSimple',  poolDim:88, label:'精原细胞核内染色质细胞', fileName:'图片 7.png' },
-  { id:'q3-c11', kind:'meta2B',         poolDim:88, label:'次级精母细胞中期B',    fileName:'图片 8.png' },
-  { id:'q3-c12', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 19.png' },
-  { id:'q3-c13', kind:'secProB',        poolDim:84, label:'次级精母细胞末前期B',  fileName:'图片 11.png' },
-  { id:'q3-c14', kind:'meta2A',         poolDim:96, label:'次级精母细胞中期A',    fileName:'图片 6.png' },
-  { id:'q3-c15', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 17.png' },
-  { id:'q3-c16', kind:'ana2B',          poolDim:88, label:'次级精母细胞后期B',    fileName:'图片 9.png' },
-  { id:'q3-c17', kind:'spermatidA',     poolDim:84, label:'红长蓝短精细胞',       fileName:'图片 13.png' },
-  { id:'q3-c18', kind:'sperm',          poolDim:82, label:'精子',                 fileName:'图片 18.png' },
-  { id:'q3-c19', kind:'spermatidB',     poolDim:84, label:'蓝长红短精细胞',       fileName:'图片 15.png' },
+  { id:'q3-c01', kind:'poolChrom1', poolDim:88, label:'寰呴€夋煋鑹蹭綋1' },
+  { id:'q3-c02', kind:'poolChrom2', poolDim:116, label:'寰呴€夋煋鑹蹭綋2' },
+  { id:'q3-c03', kind:'poolChrom3', poolDim:88, label:'寰呴€夋煋鑹蹭綋3' },
+  { id:'q3-c04', kind:'poolChrom4', poolDim:116, label:'寰呴€夋煋鑹蹭綋4' },
+  { id:'q3-c05', kind:'poolChrom5', poolDim:118, label:'寰呴€夋煋鑹蹭綋5' },
+  { id:'q3-c06', kind:'poolChrom6', poolDim:86, label:'寰呴€夋煋鑹蹭綋6' },
+  { id:'q3-c07', kind:'poolChrom7', poolDim:118, label:'寰呴€夋煋鑹蹭綋7' },
+  { id:'q3-c08', kind:'poolChrom8', poolDim:86, label:'寰呴€夋煋鑹蹭綋8' },
+  { id:'q3-c09', kind:'poolChrom9',  poolDim:118, label:'寰呴€夋煋鑹蹭綋9' },
+  { id:'q3-c10', kind:'poolChrom10', poolDim:86, label:'寰呴€夋煋鑹蹭綋10' },
+  { id:'q3-c11', kind:'poolChrom11', poolDim:118, label:'寰呴€夋煋鑹蹭綋11' },
+  { id:'q3-c12', kind:'poolChrom12', poolDim:86, label:'寰呴€夋煋鑹蹭綋12' },
 ];
 
+const Q3_PRESET_ITEMS = [
+  { id:'q3-p01', kind:'nucleusSimple',  poolDim:88, label:'棰勮绮惧師缁嗚優' },
+  { id:'q3-p02', kind:'nucleusComplex', poolDim:88, label:'预设复制后细胞' },
+  { id:'q3-p03', kind:'secProA',        poolDim:84, label:'棰勮鍑忔暟鍒嗚II鍓嶆湡A' },
+  { id:'q3-p04', kind:'secProB',        poolDim:84, label:'棰勮鍑忔暟鍒嗚II鍓嶆湡B' },
+  { id:'q3-p05', kind:'spermatidA',     poolDim:84, label:'棰勮绮剧粏鑳濧1' },
+  { id:'q3-p06', kind:'spermatidA',     poolDim:84, label:'棰勮绮剧粏鑳濧2' },
+  { id:'q3-p07', kind:'spermatidB',     poolDim:84, label:'棰勮绮剧粏鑳濨1' },
+  { id:'q3-p08', kind:'spermatidB',     poolDim:84, label:'棰勮绮剧粏鑳濨2' },
+];
+
+const Q3_ITEM_LIBRARY = [...Q3_CANDIDATES, ...Q3_PRESET_ITEMS];
+
+const Q3_PRESET_PLACEMENTS = {
+  s0:'q3-p01',
+  s1:'q3-p02',
+  s5:'q3-p03',
+  s8:'q3-p04',
+  s11:'q3-p05',
+  s12:'q3-p06',
+  s13:'q3-p07',
+  s14:'q3-p08',
+};
+
+const Q3_POOL_LAYOUTS = {
+  poolChrom1: {
+    width:74,
+    height:40,
+    chroms:[
+      { shape:'poolChrom1', size:'long', col:'red', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom2: {
+    width:98,
+    height:54,
+    chroms:[
+      { shape:'poolChrom2', size:'long', col:'red', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom3: {
+    width:74,
+    height:40,
+    chroms:[
+      { shape:'poolChrom3', size:'long', col:'blue', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom4: {
+    width:98,
+    height:54,
+    chroms:[
+      { shape:'poolChrom4', size:'long', col:'blue', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom5: {
+    width:106,
+    height:54,
+    chroms:[
+      { shape:'poolChrom5', size:'long', col:'red', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom6: {
+    width:70,
+    height:36,
+    chroms:[
+      { shape:'poolChrom6', size:'short', col:'red', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom7: {
+    width:106,
+    height:54,
+    chroms:[
+      { shape:'poolChrom7', size:'long', col:'red', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom8: {
+    width:70,
+    height:36,
+    chroms:[
+      { shape:'poolChrom8', size:'short', col:'red', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom9: {
+    width:106,
+    height:54,
+    chroms:[
+      { shape:'poolChrom9', size:'long', col:'blue', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom10: {
+    width:70,
+    height:36,
+    chroms:[
+      { shape:'poolChrom10', size:'short', col:'blue', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom11: {
+    width:106,
+    height:54,
+    chroms:[
+      { shape:'poolChrom11', size:'long', col:'blue', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  poolChrom12: {
+    width:70,
+    height:36,
+    chroms:[
+      { shape:'poolChrom12', size:'short', col:'blue', x:50, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  prophase1: {
+    width:88,
+    height:44,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:35, y:18, rot:-12, poolSize:'pool' },
+      { shape:'pair', size:'short', col:'red',  x:57, y:16, rot:8,   poolSize:'pool' },
+      { shape:'pair', size:'long',  col:'blue', x:35, y:38, rot:12,  poolSize:'pool' },
+      { shape:'pair', size:'short', col:'blue', x:57, y:40, rot:-8,  poolSize:'pool' },
+    ],
+  },
+  metaphase1: {
+    width:96,
+    height:34,
+    chroms:[
+      { shape:'flatPair', size:'long',  col:'red',  x:25, y:50, rot:0, poolSize:'pool' },
+      { shape:'flatPair', size:'long',  col:'blue', x:43, y:50, rot:0, poolSize:'pool' },
+      { shape:'flatPair', size:'short', col:'red',  x:67, y:50, rot:0, poolSize:'pool' },
+      { shape:'flatPair', size:'short', col:'blue', x:82, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  anaphase1: {
+    width:100,
+    height:46,
+    chroms:[
+      { shape:'pair', size:'long',  col:'red',  x:24, y:20, rot:-28, poolSize:'pool' },
+      { shape:'pair', size:'short', col:'red',  x:45, y:24, rot:18,  poolSize:'pool' },
+      { shape:'pair', size:'short', col:'blue', x:68, y:34, rot:-18, poolSize:'pool' },
+      { shape:'pair', size:'long',  col:'blue', x:86, y:38, rot:28,  poolSize:'pool' },
+    ],
+  },
+  meta2A: {
+    width:72,
+    height:24,
+    chroms:[
+      { shape:'bar', size:'long',  col:'red', x:37, y:50, rot:0, poolSize:'pool' },
+      { shape:'bar', size:'short', col:'red', x:72, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  ana2A: {
+    width:74,
+    height:28,
+    chroms:[
+      { shape:'bar', size:'long',  col:'red', x:36, y:40, rot:28, poolSize:'pool' },
+      { shape:'bar', size:'short', col:'red', x:74, y:54, rot:22, poolSize:'pool' },
+    ],
+  },
+  meta2B: {
+    width:72,
+    height:24,
+    chroms:[
+      { shape:'bar', size:'long',  col:'blue', x:37, y:50, rot:0, poolSize:'pool' },
+      { shape:'bar', size:'short', col:'blue', x:72, y:50, rot:0, poolSize:'pool' },
+    ],
+  },
+  ana2B: {
+    width:74,
+    height:28,
+    chroms:[
+      { shape:'bar', size:'long',  col:'blue', x:36, y:40, rot:28, poolSize:'pool' },
+      { shape:'bar', size:'short', col:'blue', x:74, y:54, rot:22, poolSize:'pool' },
+    ],
+  },
+};
+
 const Q3_SLOT_ACCEPTS = {
-  s0:['q3-c10'],
-  s1:['q3-c01'],
   s2:['q3-c02'],
   s3:['q3-c04'],
   s4:['q3-c03'],
-  s5:['q3-c08'],
-  s6:['q3-c13'],
-  s7:['q3-c14'],
-  s8:['q3-c11'],
-  s9:['q3-c06'],
+  s6:['q3-c14'],
+  s7:['q3-c06'],
+  s9:['q3-c11'],
   s10:['q3-c16'],
-  s11:['q3-c09','q3-c19'],
-  s12:['q3-c09','q3-c19'],
-  s13:['q3-c05','q3-c17'],
-  s14:['q3-c05','q3-c17'],
-  s15:['q3-c15','q3-c18'],
-  s16:['q3-c15','q3-c18'],
-  s17:['q3-c07','q3-c12'],
-  s18:['q3-c07','q3-c12'],
 };
 
 let q3Placements = {};
 let q3DragCandidateId = null;
+let q3StageNextId = 1;
+let q3StageZCounter = 1;
+let q3StageDragState = null;
+
+const Q3_AUTO_CENTERS = {
+  1:[{ x:.5,  y:.5  }],
+  2:[{ x:.34, y:.5  }, { x:.66, y:.5  }],
+  3:[{ x:.34, y:.34 }, { x:.66, y:.34 }, { x:.5,  y:.67 }],
+  4:[{ x:.34, y:.34 }, { x:.66, y:.34 }, { x:.34, y:.66 }, { x:.66, y:.66 }],
+  5:[{ x:.5,  y:.26 }, { x:.28, y:.46 }, { x:.72, y:.46 }, { x:.38, y:.72 }, { x:.62, y:.72 }],
+  6:[{ x:.3,  y:.28 }, { x:.7,  y:.28 }, { x:.3,  y:.5  }, { x:.7,  y:.5  }, { x:.3,  y:.72 }, { x:.7,  y:.72 }],
+};
 
 function q3SlotById(id) {
   return Q3_STAGE_SLOTS.find(slot => slot.id === id);
 }
 
 function q3CandidateById(id) {
-  return Q3_CANDIDATES.find(item => item.id === id);
+  return Q3_ITEM_LIBRARY.find(item => item.id === id);
 }
 
 function q3Dim(sizeKey) {
   return Q3_SLOT_DIM[sizeKey] || 88;
+}
+
+function q3InitialPlacements() {
+  return Q3_STAGE_SLOTS.reduce((acc, slot) => {
+    if (!Q3_PRESET_PLACEMENTS[slot.id]) acc[slot.id] = [];
+    return acc;
+  }, {});
+}
+
+function q3SlotIsPreset(slotId) {
+  return !!Q3_PRESET_PLACEMENTS[slotId];
+}
+
+function q3GetSlotItems(slotId) {
+  if (!Array.isArray(q3Placements[slotId])) q3Placements[slotId] = [];
+  return q3Placements[slotId];
+}
+
+function q3FindStageItem(slotId, itemId) {
+  return q3GetSlotItems(slotId).find(item => item.id === itemId);
+}
+
+function q3Clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function q3AutoCenters(count) {
+  if (Q3_AUTO_CENTERS[count]) return Q3_AUTO_CENTERS[count];
+
+  const cols = Math.max(2, Math.ceil(Math.sqrt(count)));
+  const rows = Math.ceil(count / cols);
+  const centers = [];
+  for (let i = 0; i < count; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    centers.push({
+      x: (col + 1) / (cols + 1),
+      y: (row + 1) / (rows + 1),
+    });
+  }
+  return centers;
+}
+
+function q3StageScaleFactor(count) {
+  if (count <= 1) return 0.40;
+  if (count === 2) return 0.31;
+  if (count <= 4) return 0.27;
+  if (count <= 6) return 0.23;
+  return 0.20;
+}
+
+function q3PlacedItemDim(candidate, slotDim, count) {
+  const maxDim = Math.round(slotDim * (count <= 1 ? 0.60 : count === 2 ? 0.54 : count <= 4 ? 0.47 : 0.40));
+  const scaled = Math.round(candidate.poolDim * q3StageScaleFactor(count));
+  return Math.max(18, Math.min(maxDim, scaled));
+}
+
+function q3ResolveStageItemPos(item, itemDim, slotDim, autoPos) {
+  const min = itemDim / (slotDim * 2);
+  const max = 1 - min;
+  const centerX = item.manual ? (item.x ?? .5) : autoPos.x;
+  const centerY = item.manual ? (item.y ?? .5) : autoPos.y;
+  const x = q3Clamp(centerX, min, max);
+  const y = q3Clamp(centerY, min, max);
+  return {
+    x,
+    y,
+    left: x * slotDim - itemDim / 2,
+    top: y * slotDim - itemDim / 2,
+  };
+}
+
+function q3CollectUsedCandidateIds() {
+  return Object.values(q3Placements).flatMap(items =>
+    Array.isArray(items) ? items.map(item => item.candidateId) : []
+  );
+}
+
+function q3FinishStageMove() {
+  q3StageDragState = null;
+  document.removeEventListener('pointermove', q3HandleStagePointerMove);
+  document.removeEventListener('pointerup', q3HandleStagePointerUp);
+  document.removeEventListener('pointercancel', q3HandleStagePointerUp);
+}
+
+function q3StartMoveItem(e, slotId, itemId, el) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  if (q3StageDragState) q3FinishStageMove();
+
+  const slotEl = document.getElementById('q3-slot-' + slotId);
+  const item = q3FindStageItem(slotId, itemId);
+  if (!(slotEl && item)) return;
+
+  const rect = el.getBoundingClientRect();
+  item.z = ++q3StageZCounter;
+  item.manual = true;
+  el.style.zIndex = item.z;
+
+  q3StageDragState = {
+    slotId,
+    itemId,
+    el,
+    width: rect.width,
+    height: rect.height,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+  };
+
+  document.addEventListener('pointermove', q3HandleStagePointerMove);
+  document.addEventListener('pointerup', q3HandleStagePointerUp);
+  document.addEventListener('pointercancel', q3HandleStagePointerUp);
+}
+
+function q3HandleStagePointerMove(e) {
+  if (!q3StageDragState) return;
+
+  const { slotId, itemId, el, width, height, offsetX, offsetY } = q3StageDragState;
+  const slotEl = document.getElementById('q3-slot-' + slotId);
+  const slot = q3SlotById(slotId);
+  const item = q3FindStageItem(slotId, itemId);
+  if (!(slotEl && slot && item)) return;
+
+  const slotRect = slotEl.getBoundingClientRect();
+  const slotDim = q3Dim(slot.size);
+  const maxLeftPx = Math.max(0, slotRect.width - width);
+  const maxTopPx = Math.max(0, slotRect.height - height);
+  const leftPx = q3Clamp(e.clientX - slotRect.left - offsetX, 0, maxLeftPx);
+  const topPx = q3Clamp(e.clientY - slotRect.top - offsetY, 0, maxTopPx);
+  const scaleX = slotRect.width ? slotDim / slotRect.width : 1;
+  const scaleY = slotRect.height ? slotDim / slotRect.height : 1;
+
+  el.style.left = (leftPx * scaleX) + 'px';
+  el.style.top = (topPx * scaleY) + 'px';
+
+  item.x = q3Clamp((leftPx + width / 2) / slotRect.width, 0, 1);
+  item.y = q3Clamp((topPx + height / 2) / slotRect.height, 0, 1);
+}
+
+function q3HandleStagePointerUp() {
+  q3FinishStageMove();
 }
 
 function q3ImageUrl(fileName) {
@@ -1659,6 +2116,196 @@ function q3ChrPairSVG(item, size) {
   [2, 2 + thick + gap].forEach(y => {
     s.appendChild(svgRect(2, y, len, thick, thick / 2, fill, stroke, 1.2));
   });
+  return s;
+}
+
+function q3BranchPairSVG(item, size='sm') {
+  const isLong = item.size === 'long';
+  const len = size === 'xxs'   ? (isLong ? 12 : 8)
+            : size === 'xs'    ? (isLong ? 15 : 10)
+            : size === 'pool'  ? (isLong ? 18 : 12)
+            : size === 'stage' ? (isLong ? 17 : 11)
+            : size === 'md'    ? (isLong ? 24 : 16)
+            :                    (isLong ? 20 : 13);
+  const spread = size === 'xxs'   ? (isLong ? 3.2 : 2.4)
+               : size === 'xs'    ? (isLong ? 4.2 : 3.0)
+               : size === 'pool'  ? (isLong ? 4.9 : 3.4)
+               : size === 'stage' ? (isLong ? 4.6 : 3.2)
+               : size === 'md'    ? (isLong ? 6.4 : 4.6)
+               :                    (isLong ? 5.3 : 3.8);
+  const thick = size === 'xxs'   ? (isLong ? 4.0 : 3.2)
+              : size === 'xs'    ? (isLong ? 4.8 : 3.8)
+              : size === 'pool'  ? (isLong ? 5.4 : 4.2)
+              : size === 'stage' ? (isLong ? 5.1 : 4.0)
+              : size === 'md'    ? (isLong ? 6.8 : 5.2)
+              :                    (isLong ? 5.8 : 4.4);
+  const cx = len + 8;
+  const cy = len * 0.5 + 8;
+  const w = cx * 2;
+  const h = cy * 2;
+  const fill = item.col === 'red' ? Q4_COLORS.red : Q4_COLORS.blue;
+  const stroke = item.col === 'red' ? Q4_COLORS.redDark : Q4_COLORS.blueDark;
+  const dotR = size === 'xxs' ? 2.7 : size === 'xs' ? 3.1 : size === 'pool' ? 3.45 : size === 'stage' ? 3.35 : 4.0;
+  const s = makeSVG(w, h);
+
+  [
+    [cx, cy, cx - len, cy - spread],
+    [cx, cy, cx - len, cy + spread],
+    [cx, cy, cx + len, cy - spread],
+    [cx, cy, cx + len, cy + spread],
+  ].forEach(([x1, y1, x2, y2]) => {
+    s.appendChild(svgLine(x1, y1, x2, y2, thick + 2, stroke));
+    s.appendChild(svgLine(x1, y1, x2, y2, thick, fill));
+  });
+  s.appendChild(svgCircle(cx, cy, dotR, fill, '#64748b', 1.1));
+  return s;
+}
+
+function q3FlatPairSVG(item, size='pool') {
+  const isLong = item.size === 'long';
+  const len = size === 'pool' ? (isLong ? 38 : 27) : (isLong ? 34 : 24);
+  const band = size === 'pool' ? (isLong ? 8.4 : 7.2) : (isLong ? 7.6 : 6.6);
+  const gap = size === 'pool' ? (isLong ? 10.5 : 8.6) : (isLong ? 9.4 : 7.8);
+  const ovalW = size === 'pool' ? (isLong ? 11 : 9.5) : (isLong ? 10 : 8.8);
+  const ovalH = size === 'pool' ? (isLong ? 18 : 15) : (isLong ? 16 : 13.5);
+  const pad = 5;
+  const w = len + pad * 2;
+  const h = band * 2 + gap + pad * 2;
+  const cx = w / 2;
+  const cy = h / 2;
+  const fill = item.col === 'red' ? Q4_COLORS.red : Q4_COLORS.blue;
+  const stroke = item.col === 'red' ? Q4_COLORS.redDark : Q4_COLORS.blueDark;
+
+  const topY = cy - gap / 2 - band;
+  const bottomY = cy + gap / 2;
+  const half = len / 2;
+  const taper = isLong ? 3.2 : 2.4;
+  const s = makeSVG(w, h);
+
+  const top = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  top.setAttribute('d', `M ${cx - half} ${topY + band*0.18} L ${cx - ovalW*0.45} ${topY} L ${cx + ovalW*0.45} ${topY} L ${cx + half} ${topY + band*0.18} L ${cx + half - taper} ${topY + band} L ${cx + ovalW*0.5} ${topY + band*0.88} L ${cx - ovalW*0.5} ${topY + band*0.88} L ${cx - half + taper} ${topY + band} Z`);
+  top.setAttribute('fill', fill);
+  top.setAttribute('stroke', stroke);
+  top.setAttribute('stroke-width', '1.2');
+  s.appendChild(top);
+
+  const bottom = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  bottom.setAttribute('d', `M ${cx - half + taper} ${bottomY} L ${cx - ovalW*0.5} ${bottomY + band*0.12} L ${cx + ovalW*0.5} ${bottomY + band*0.12} L ${cx + half - taper} ${bottomY} L ${cx + half} ${bottomY + band*0.82} L ${cx + ovalW*0.45} ${bottomY + band} L ${cx - ovalW*0.45} ${bottomY + band} L ${cx - half} ${bottomY + band*0.82} Z`);
+  bottom.setAttribute('fill', fill);
+  bottom.setAttribute('stroke', stroke);
+  bottom.setAttribute('stroke-width', '1.2');
+  s.appendChild(bottom);
+
+  const oval = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+  oval.setAttribute('cx', cx);
+  oval.setAttribute('cy', cy);
+  oval.setAttribute('rx', ovalW / 2);
+  oval.setAttribute('ry', ovalH / 2);
+  oval.setAttribute('fill', 'none');
+  oval.setAttribute('stroke', '#0f6f94');
+  oval.setAttribute('stroke-width', size === 'pool' ? '3.1' : '2.6');
+  s.appendChild(oval);
+
+  return s;
+}
+
+function q3PoolChromSVG(variant='small', col='red') {
+  const isLarge = variant === 'large';
+  const width = isLarge ? 98 : 74;
+  const height = isLarge ? 54 : 40;
+  const s = makeSVG(width, height);
+  const fill = col === 'blue' ? '#1ea7d8' : '#e05252';
+  const stroke = col === 'blue' ? '#0f6f94' : '#a83232';
+  const cx = isLarge ? 49 : 37;
+  const cy = isLarge ? 27 : 20;
+  const thickOuter = isLarge ? 8.6 : 6.6;
+  const thickInner = isLarge ? 6.4 : 4.8;
+  s.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  s.setAttribute('width', width);
+  s.setAttribute('height', height);
+
+  [
+    isLarge ? [cx, cy, 13, 15] : [cx, cy, 10, 12],
+    isLarge ? [cx, cy, 13, 39] : [cx, cy, 10, 28],
+    isLarge ? [cx, cy, 85, 15] : [cx, cy, 64, 12],
+    isLarge ? [cx, cy, 85, 39] : [cx, cy, 64, 28],
+  ].forEach(([x1, y1, x2, y2]) => {
+    s.appendChild(svgLine(x1, y1, x2, y2, thickOuter, stroke));
+    s.appendChild(svgLine(x1, y1, x2, y2, thickInner, fill));
+  });
+
+  const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  center.setAttribute('cx', String(cx));
+  center.setAttribute('cy', String(cy));
+  center.setAttribute('r', isLarge ? '5.8' : '4.4');
+  center.setAttribute('fill', fill);
+  center.setAttribute('stroke', stroke);
+  center.setAttribute('stroke-width', isLarge ? '1.5' : '1.2');
+  s.appendChild(center);
+
+  return s;
+}
+
+function q3PoolOpenChromSVG(variant='large', col='red', direction='down') {
+  const isLarge = variant === 'large';
+  const opensUp = direction === 'up';
+  const width = isLarge ? 106 : 70;
+  const height = isLarge ? 54 : 36;
+  const s = makeSVG(width, height);
+  const fill = col === 'blue' ? '#1ea7d8' : '#e05252';
+  const stroke = col === 'blue' ? '#0f6f94' : '#a83232';
+  const cx = isLarge ? 53 : 35;
+  const cy = opensUp ? (isLarge ? 40 : 26) : (isLarge ? 14 : 10);
+  const thickOuter = isLarge ? 8.4 : 6.2;
+  const thickInner = isLarge ? 6.2 : 4.5;
+
+  [
+    opensUp
+      ? (isLarge ? [cx, cy, 10, 16] : [cx, cy, 8, 12])
+      : (isLarge ? [cx, cy, 10, 38] : [cx, cy, 8, 24]),
+    opensUp
+      ? (isLarge ? [cx, cy, 96, 16] : [cx, cy, 62, 12])
+      : (isLarge ? [cx, cy, 96, 38] : [cx, cy, 62, 24]),
+  ].forEach(([x1, y1, x2, y2]) => {
+    s.appendChild(svgLine(x1, y1, x2, y2, thickOuter, stroke));
+    s.appendChild(svgLine(x1, y1, x2, y2, thickInner, fill));
+  });
+
+  const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  center.setAttribute('cx', String(cx));
+  center.setAttribute('cy', String(cy));
+  center.setAttribute('r', isLarge ? '6.2' : '4.8');
+  center.setAttribute('fill', fill);
+  center.setAttribute('stroke', stroke);
+  center.setAttribute('stroke-width', isLarge ? '1.5' : '1.2');
+  s.appendChild(center);
+
+  return s;
+}
+
+function q3BranchBarSVG(item, size='sm') {
+  const isLong = item.size === 'long';
+  const len = size === 'xxs'   ? (isLong ? 17 : 11)
+            : size === 'xs'    ? (isLong ? 21 : 14)
+            : size === 'pool'  ? (isLong ? 26 : 17)
+            : size === 'stage' ? (isLong ? 24 : 16)
+            : size === 'md'    ? (isLong ? 34 : 22)
+            :                    (isLong ? 28 : 18);
+  const thick = size === 'xxs'   ? (isLong ? 4.0 : 3.1)
+              : size === 'xs'    ? (isLong ? 4.8 : 3.7)
+              : size === 'pool'  ? (isLong ? 5.5 : 4.2)
+              : size === 'stage' ? (isLong ? 5.2 : 4.0)
+              : size === 'md'    ? (isLong ? 6.4 : 4.8)
+              :                    (isLong ? 5.6 : 4.2);
+  const w = len + 12;
+  const h = thick + 12;
+  const y = h / 2;
+  const fill = item.col === 'red' ? Q4_COLORS.red : Q4_COLORS.blue;
+  const stroke = item.col === 'red' ? Q4_COLORS.redDark : Q4_COLORS.blueDark;
+  const s = makeSVG(w, h);
+  s.appendChild(svgLine(6, y, w - 6, y, thick + 2, stroke));
+  s.appendChild(svgLine(6, y, w - 6, y, thick, fill));
+  s.appendChild(svgCircle(w / 2, y, size === 'xxs' ? 2.6 : size === 'xs' ? 3.0 : size === 'pool' ? 3.4 : size === 'stage' ? 3.2 : 3.8, fill, '#64748b', 1.1));
   return s;
 }
 
@@ -1757,64 +2404,87 @@ function q3AddSpindle(cell) {
   });
 }
 
-function q3PlaceChromosome(cell, spec) {
+function q3CreateDiagramChromosome(spec, mode) {
   const wrap = document.createElement('div');
-  wrap.className = 'q3-stage-chr';
-  wrap.style.left = spec.x + 'px';
-  wrap.style.top = spec.y + 'px';
-  wrap.style.transform = `rotate(${spec.rot || 0}deg)`;
+  wrap.className = 'q3-visual-chr';
+  wrap.style.left = spec.x + '%';
+  wrap.style.top = spec.y + '%';
+  wrap.style.transform = `translate(-50%, -50%) rotate(${spec.rot || 0}deg)`;
 
   const item = { size: spec.size, col: spec.col };
-  const svg = spec.shape === 'pair' ? q3ChrPairSVG(item, 'lg') : q4ChrBarSVG(item, 'lg');
+  const sizeKey = mode === 'pool'
+    ? (spec.poolSize || 'sm')
+    : (spec.stageSize || 'xxs');
+  const svg = spec.shape === 'pair'
+    ? q3BranchPairSVG(item, sizeKey)
+    : spec.shape === 'poolChrom1'
+      ? q3PoolChromSVG('small', 'red')
+    : spec.shape === 'poolChrom2'
+      ? q3PoolChromSVG('large', 'red')
+    : spec.shape === 'poolChrom3'
+      ? q3PoolChromSVG('small', 'blue')
+    : spec.shape === 'poolChrom4'
+      ? q3PoolChromSVG('large', 'blue')
+    : spec.shape === 'poolChrom5'
+      ? q3PoolOpenChromSVG('large', 'red', 'down')
+    : spec.shape === 'poolChrom6'
+      ? q3PoolOpenChromSVG('small', 'red', 'down')
+    : spec.shape === 'poolChrom7'
+      ? q3PoolOpenChromSVG('large', 'red', 'up')
+    : spec.shape === 'poolChrom8'
+      ? q3PoolOpenChromSVG('small', 'red', 'up')
+    : spec.shape === 'poolChrom9'
+      ? q3PoolOpenChromSVG('large', 'blue', 'down')
+    : spec.shape === 'poolChrom10'
+      ? q3PoolOpenChromSVG('small', 'blue', 'down')
+    : spec.shape === 'poolChrom11'
+      ? q3PoolOpenChromSVG('large', 'blue', 'up')
+    : spec.shape === 'poolChrom12'
+      ? q3PoolOpenChromSVG('small', 'blue', 'up')
+    : spec.shape === 'flatPair'
+      ? q3FlatPairSVG(item, sizeKey)
+      : q3BranchBarSVG(item, sizeKey);
   svg.style.display = 'block';
   wrap.appendChild(svg);
-  cell.appendChild(wrap);
-}
-
-function q3CreateCellVisual(candidate, dim, mode) {
-  const spec = Q3_VISUAL_LIBRARY[candidate.kind];
-  if (!spec) return null;
-
-  const frame = document.createElement('div');
-  frame.className = 'q3-visual-frame';
-  frame.style.transform = `scale(${dim / 120})`;
-
-  const cell = document.createElement('div');
-  cell.className = 'q3-visual-cell' + (spec.cleavage ? ' cleavage' : '');
-  frame.appendChild(cell);
-
-  if (spec.spindle) q3AddSpindle(cell);
-
-  if (spec.nucleus) {
-    const nucleus = document.createElement('div');
-    nucleus.className = 'q3-cell-nucleus';
-    nucleus.appendChild(q3CreateChromatinSVG(spec.nucleus));
-    cell.appendChild(nucleus);
-  }
-
-  (spec.chroms || []).forEach(item => q3PlaceChromosome(cell, item));
-  return frame;
+  return wrap;
 }
 
 function q3CreateCandidateVisual(candidate, dim, mode='pool') {
+  const spec = Q3_VISUAL_LIBRARY[candidate.kind];
+  const layout = Q3_POOL_LAYOUTS[candidate.kind] || null;
+  const poolLayout = mode === 'pool' ? layout : null;
   const outer = document.createElement('div');
-  outer.className = 'q3-visual q3-visual-' + mode + (candidate.kind === 'sperm' ? ' q3-visual-sperm' : '');
+  outer.className = 'q3-visual q3-visual-' + mode;
   outer.style.width = dim + 'px';
   outer.style.height = dim + 'px';
 
-  const img = document.createElement('img');
-  img.className = 'q3-visual-img';
-  img.src = q3ImageUrl(candidate.fileName);
-  img.alt = candidate.label;
-  img.draggable = false;
-  img.loading = 'lazy';
-  img.decoding = 'async';
-  img.addEventListener('error', () => {
-    if (img.dataset.fallbackDone === '1') return;
-    img.dataset.fallbackDone = '1';
-    img.src = encodeURI('./images/' + candidate.fileName);
-  }, { once:true });
-  outer.appendChild(img);
+  if (!spec) return outer;
+
+  const artboard = document.createElement('div');
+  artboard.className = 'q3-visual-artboard';
+  if (mode === 'stage') {
+    artboard.style.width = dim + 'px';
+    artboard.style.height = dim + 'px';
+    artboard.style.transform = 'none';
+  } else if (poolLayout) {
+    const boardWidth = poolLayout.width || 120;
+    const boardHeight = poolLayout.height || 56;
+    artboard.style.width = boardWidth + 'px';
+    artboard.style.height = boardHeight + 'px';
+    artboard.style.transformOrigin = 'center center';
+    artboard.style.transform = `scale(${Math.min(dim / boardWidth, dim / boardHeight)})`;
+  } else {
+    artboard.style.width = '112px';
+    artboard.style.height = '88px';
+    artboard.style.transformOrigin = 'center center';
+    artboard.style.transform = `scale(${dim / 112})`;
+  }
+
+  const chroms = mode === 'stage'
+    ? ((spec.stageChroms && spec.stageChroms.length) ? spec.stageChroms : (layout ? layout.chroms : []))
+    : (poolLayout ? poolLayout.chroms : (spec.chroms || []));
+  chroms.forEach(item => artboard.appendChild(q3CreateDiagramChromosome(item, mode)));
+  outer.appendChild(artboard);
   return outer;
 }
 
@@ -1823,43 +2493,26 @@ function q3RenderAnnotations() {
   if (!annos) return;
 
   annos.innerHTML = `
-    <div class="q3-stage-anno big center" style="left:10px;top:146px;width:90px;">精原细胞</div>
-    <div class="q3-stage-bracket-h" style="left:56px;top:296px;width:102px;"></div>
-    <div class="q3-stage-anno mid process center" style="left:62px;top:316px;width:90px;">复制</div>
+    <div class="q3-stage-anno big center" style="left:18px;top:198px;width:54px;white-space:normal;line-height:1.08;">精原<br>细胞</div>
+    <div class="q3-stage-anno center" style="left:74px;top:120px;width:108px;font-size:24px;font-weight:800;color:#dc2626;">复制</div>
 
-    <div class="q3-stage-anno big center" style="left:260px;top:150px;width:88px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:380px;top:150px;width:88px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:500px;top:150px;width:88px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:304px;top:296px;width:284px;"></div>
-    <div class="q3-stage-anno big group center" style="left:336px;top:314px;width:222px;">初级精母细胞</div>
+    <div class="q3-stage-anno big center" style="left:338px;top:208px;width:74px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:498px;top:208px;width:74px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:658px;top:208px;width:74px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:360px;top:250px;width:296px;"></div>
+    <div class="q3-stage-anno center" style="left:400px;top:262px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂I</div>
 
-    <div class="q3-stage-anno big center" style="left:642px;top:14px;width:104px;">末/前期</div>
-    <div class="q3-stage-anno big center" style="left:790px;top:14px;width:84px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:930px;top:14px;width:84px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:694px;top:156px;width:324px;"></div>
-    <div class="q3-stage-anno big group center" style="left:744px;top:174px;width:226px;">次级精母细胞</div>
+    <div class="q3-stage-anno big center" style="left:788px;top:136px;width:74px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:928px;top:136px;width:74px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:1068px;top:136px;width:74px;">后期</div>
 
-    <div class="q3-stage-anno big center" style="left:642px;top:294px;width:104px;">末/前期</div>
-    <div class="q3-stage-anno big center" style="left:792px;top:294px;width:84px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:932px;top:294px;width:84px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:694px;top:436px;width:324px;"></div>
-    <div class="q3-stage-anno big group center" style="left:744px;top:454px;width:226px;">次级精母细胞</div>
+    <div class="q3-stage-anno big center" style="left:788px;top:296px;width:74px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:928px;top:296px;width:74px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:1068px;top:296px;width:74px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:820px;top:350px;width:292px;"></div>
+    <div class="q3-stage-anno center" style="left:858px;top:362px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂II</div>
 
-    <div class="q3-stage-anno big soft center" style="left:1068px;top:0;width:96px;">精细胞</div>
-    <div class="q3-stage-anno mid process center" style="left:1162px;top:38px;width:54px;">变形</div>
-    <div class="q3-stage-anno big soft center" style="left:1212px;top:0;width:70px;">精子</div>
-
-    <div class="q3-stage-anno big soft center" style="left:1068px;top:140px;width:96px;">精细胞</div>
-    <div class="q3-stage-anno mid process center" style="left:1162px;top:178px;width:54px;">变形</div>
-    <div class="q3-stage-anno big soft center" style="left:1212px;top:140px;width:70px;">精子</div>
-
-    <div class="q3-stage-anno big soft center" style="left:1068px;top:300px;width:96px;">精细胞</div>
-    <div class="q3-stage-anno mid process center" style="left:1162px;top:338px;width:54px;">变形</div>
-    <div class="q3-stage-anno big soft center" style="left:1212px;top:300px;width:70px;">精子</div>
-
-    <div class="q3-stage-anno big soft center" style="left:1068px;top:440px;width:96px;">精细胞</div>
-    <div class="q3-stage-anno mid process center" style="left:1162px;top:478px;width:54px;">变形</div>
-    <div class="q3-stage-anno big soft center" style="left:1212px;top:440px;width:70px;">精子</div>
+    <div class="q3-stage-anno big soft center" style="left:1156px;top:342px;width:126px;">精细胞</div>
   `;
 }
 
@@ -1883,13 +2536,7 @@ function q3RenderArrows() {
   svg.setAttribute('viewBox', `0 0 ${Q3_STAGE_SIZE.width} ${Q3_STAGE_SIZE.height}`);
   svg.setAttribute('width', Q3_STAGE_SIZE.width);
   svg.setAttribute('height', Q3_STAGE_SIZE.height);
-  svg.innerHTML = `
-    <defs>
-      <marker id="q3-arrowhead" markerWidth="7" markerHeight="7" refX="5.2" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
-        <polygon points="0 0, 6 3.2, 0 6.4" fill="#111827"></polygon>
-      </marker>
-    </defs>
-  `;
+  svg.innerHTML = '';
 
   Q3_STAGE_BACKDROPS.forEach(item => {
     const band = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -1911,7 +2558,6 @@ function q3RenderArrows() {
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
     path.setAttribute('opacity', '.98');
-    path.setAttribute('marker-end', 'url(#q3-arrowhead)');
     svg.appendChild(path);
   });
 }
@@ -1924,10 +2570,15 @@ function q3ClearDropHighlights() {
 }
 
 function q3CanAccept(slot, candidate) {
-  if (!(slot && candidate)) return false;
-  const accepted = Q3_SLOT_ACCEPTS[slot.id];
-  if (accepted && accepted.length) return accepted.includes(candidate.id);
-  return slot.kind === candidate.kind;
+  return !!(slot && candidate && !q3SlotIsPreset(slot.id));
+}
+
+function q3ReturnToPool(slotId, itemId) {
+  if (!slotId || q3SlotIsPreset(slotId) || !itemId) return;
+  q3Placements[slotId] = q3GetSlotItems(slotId).filter(item => item.id !== itemId);
+  clrFB('q3-fb');
+  q3RenderPool();
+  q3RenderStage();
 }
 
 function q3RenderStage() {
@@ -1935,48 +2586,93 @@ function q3RenderStage() {
   if (!layer) return;
   layer.innerHTML = '';
 
-  Q3_STAGE_SLOTS.forEach(slot => {
-    const dim = q3Dim(slot.size);
-    const el = document.createElement('div');
-    el.id = 'q3-slot-' + slot.id;
-    el.className = 'q3-stage-slot';
-    el.style.left = slot.x + 'px';
-    el.style.top = slot.y + 'px';
-    el.style.width = dim + 'px';
-    el.style.height = dim + 'px';
+  {
+    Q3_STAGE_SLOTS.forEach(slot => {
+      const dim = q3Dim(slot.size);
+      const el = document.createElement('div');
+      el.id = 'q3-slot-' + slot.id;
+      el.className = 'q3-stage-slot';
+      el.style.left = slot.x + 'px';
+      el.style.top = slot.y + 'px';
+      el.style.width = dim + 'px';
+      el.style.height = dim + 'px';
+      el.dataset.droppable = 'true';
 
-    const candidateId = q3Placements[slot.id];
-    if (candidateId) {
-      el.classList.add('filled');
-      const candidate = q3CandidateById(candidateId);
-      const preview = q3CreateCandidateVisual(candidate, Math.max(34, dim - 8), 'stage');
-      preview.style.pointerEvents = 'auto';
-      preview.title = '点击退回';
-      preview.addEventListener('click', () => {
-        q3Placements[slot.id] = null;
-        clrFB('q3-fb');
-        q3RenderPool();
-        q3RenderStage();
-      });
-      el.appendChild(preview);
-    }
+      const presetCandidateId = Q3_PRESET_PLACEMENTS[slot.id];
+      if (presetCandidateId) {
+        el.classList.add('filled', 'preset');
+        const candidate = q3CandidateById(presetCandidateId);
+        const preview = q3CreateCandidateVisual(candidate, Math.max(38, dim - 4), 'stage');
+        preview.style.position = 'absolute';
+        preview.style.left = '50%';
+        preview.style.top = '50%';
+        preview.style.transform = 'translate(-50%, -50%)';
+        preview.style.pointerEvents = 'none';
+        el.appendChild(preview);
+      } else {
+        const items = q3GetSlotItems(slot.id)
+          .slice()
+          .sort((a, b) => a.z - b.z);
+        if (items.length) el.classList.add('filled');
 
-    el.ondragover = e => {
-      e.preventDefault();
-      const candidate = q3CandidateById(q3DragCandidateId);
-      if (!q3Placements[slot.id] && q3CanAccept(slot, candidate)) {
-        el.classList.add('can-drop');
+        const autoCenters = q3AutoCenters(items.length);
+        let autoIndex = 0;
+        items.forEach(item => {
+          const candidate = q3CandidateById(item.candidateId);
+          if (!candidate) return;
+
+          const itemDim = q3PlacedItemDim(candidate, dim, items.length);
+          const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+          const pos = q3ResolveStageItemPos(item, itemDim, dim, autoPos);
+          if (!item.manual) autoIndex += 1;
+
+          const piece = document.createElement('div');
+          piece.className = 'q3-stage-item';
+          piece.dataset.slotId = slot.id;
+          piece.dataset.itemId = item.id;
+          piece.style.width = itemDim + 'px';
+          piece.style.height = itemDim + 'px';
+          piece.style.left = pos.left + 'px';
+          piece.style.top = pos.top + 'px';
+          piece.style.zIndex = item.z;
+
+          const visual = q3CreateCandidateVisual(candidate, itemDim, 'pool');
+          visual.style.pointerEvents = 'none';
+          piece.appendChild(visual);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'q3-stage-remove';
+          removeBtn.textContent = '×';
+          removeBtn.addEventListener('pointerdown', e => e.stopPropagation());
+          removeBtn.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            q3ReturnToPool(slot.id, item.id);
+          });
+          piece.appendChild(removeBtn);
+
+          piece.addEventListener('pointerdown', e => q3StartMoveItem(e, slot.id, item.id, piece));
+          el.appendChild(piece);
+        });
       }
-    };
-    el.ondragleave = () => el.classList.remove('can-drop');
-    el.ondrop = e => {
-      e.preventDefault();
-      el.classList.remove('can-drop');
-      q3HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
-    };
 
-    layer.appendChild(el);
-  });
+      el.ondragover = e => {
+        if (!q3CanAccept(slot, q3CandidateById(q3DragCandidateId))) return;
+        e.preventDefault();
+        el.classList.add('can-drop');
+      };
+      el.ondragleave = () => el.classList.remove('can-drop');
+      el.ondrop = e => {
+        e.preventDefault();
+        el.classList.remove('can-drop');
+        q3HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
+      };
+
+      layer.appendChild(el);
+    });
+    return;
+  }
 }
 
 function q3RenderPool() {
@@ -1984,14 +2680,13 @@ function q3RenderPool() {
   if (!pool) return;
   pool.innerHTML = '';
 
-  const used = new Set(Object.values(q3Placements).filter(Boolean));
+  const used = new Set(q3CollectUsedCandidateIds());
   Q3_CANDIDATES.filter(item => !used.has(item.id)).forEach(candidate => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'q3-pool-item';
     btn.draggable = true;
     btn.dataset.id = candidate.id;
-    btn.title = candidate.label;
     btn.appendChild(q3CreateCandidateVisual(candidate, candidate.poolDim, 'pool'));
 
     btn.addEventListener('dragstart', e => {
@@ -2020,33 +2715,34 @@ function q3HandleDrop(slotId, candidateId) {
   const slot = q3SlotById(slotId);
   const candidate = q3CandidateById(candidateId);
   if (!slot || !candidate) return;
+  if (!q3CanAccept(slot, candidate)) return;
 
-  if (q3Placements[slotId]) {
-    return;
-  }
+  const used = new Set(q3CollectUsedCandidateIds());
+  if (used.has(candidateId)) return;
 
-  if (!q3CanAccept(slot, candidate)) {
-    return;
-  }
-
-  q3Placements[slotId] = candidateId;
+  q3GetSlotItems(slotId).push({
+    id: 'q3-stage-item-' + q3StageNextId++,
+    candidateId,
+    x: .5,
+    y: .5,
+    manual: false,
+    z: ++q3StageZCounter,
+  });
   clrFB('q3-fb');
   q3RenderPool();
   q3RenderStage();
-
-  if (Q3_STAGE_SLOTS.every(item => q3Placements[item.id])) {
-    Q3_STAGE_SLOTS.forEach(item => q3FlashSlotState(item.id, 'correct'));
-    clrFB('q3-fb');
-  }
 }
 
 function q3Hint() {
-  setFB('q3-fb', '💡 先从两种“核内染色质细胞”开始，再按“前期 → 中期 → 后期”补全初级精母细胞；之后分别找到两种不同组合的次级精母细胞、对应的精细胞，最后再放入4个精子。', 'hint');
+  clrFB('q3-fb');
 }
 
 function q3Build() {
-  q3Placements = {};
+  q3FinishStageMove();
+  q3Placements = q3InitialPlacements();
   q3DragCandidateId = null;
+  q3StageNextId = 1;
+  q3StageZCounter = 1;
   q3Built = true;
   q3RenderAnnotations();
   q3RenderArrows();
@@ -2062,38 +2758,41 @@ function q3Build() {
 }
 
 function q3Reset() {
-  q3Placements = {};
+  q3FinishStageMove();
+  q3Placements = q3InitialPlacements();
   q3DragCandidateId = null;
+  q3StageNextId = 1;
+  q3StageZCounter = 1;
   clrFB('q3-fb');
   if (!q3Built) return;
   q3Build();
 }
+
 function fullReset() { q1Reset(); q2Reset(); q3Reset(); switchTab(0); }
 
-// ═══════════════════════════════════════════════════
-// INQUIRY 4 — same as inquiry 3 but with red/blue color distinction
-// ═══════════════════════════════════════════════════
-// Colors: pair1=red(同源A), pair2=blue(同源B)
+
+// 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// INQUIRY 4 鈥?same as inquiry 3 but with red/blue color distinction
+// 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// Colors: pair1=red(鍚屾簮A), pair2=blue(鍚屾簮B)
 // X items: 4 (red-long, blue-long, red-short, blue-short)
-// Bar items: 8 (red-long×2, blue-long×2, red-short×2, blue-short×2)
+// Bar items: 8 (red-long脳2, blue-long脳2, red-short脳2, blue-short脳2)
 
 const Q4_COLORS = { red:'#e05252', redDark:'#a83232', blue:'#1ea7d8', blueDark:'#0f6f94' };
 
 const Q4_X_ITEMS = [
-  { id:'q4xRL', size:'long',  col:'red',  label:'红长X' },
-  { id:'q4xBL', size:'long',  col:'blue', label:'蓝长X' },
-  { id:'q4xRS', size:'short', col:'red',  label:'红短X' },
-  { id:'q4xBS', size:'short', col:'blue', label:'蓝短X' },
+  { id:'q4xRL', size:'long',  col:'red',  label:'绾㈤暱X' },
+  { id:'q4xBL', size:'long',  col:'blue', label:'钃濋暱X' },
+  { id:'q4xRS', size:'short', col:'red',  label:'绾㈢煭X' },
+  { id:'q4xBS', size:'short', col:'blue', label:'钃濈煭X' },
 ];
 const Q4_BAR_ITEMS = [
-  { id:'q4bRL1', size:'long',  col:'red',  label:'红长①' },
-  { id:'q4bRL2', size:'long',  col:'red',  label:'红长②' },
-  { id:'q4bBL1', size:'long',  col:'blue', label:'蓝长①' },
-  { id:'q4bBL2', size:'long',  col:'blue', label:'蓝长②' },
-  { id:'q4bRS1', size:'short', col:'red',  label:'红短①' },
-  { id:'q4bRS2', size:'short', col:'red',  label:'红短②' },
-  { id:'q4bBS1', size:'short', col:'blue', label:'蓝短①' },
-  { id:'q4bBS2', size:'short', col:'blue', label:'蓝短②' },
+  { id:'q4bRL1', size:'long',  col:'red',  label:'红长I1' },
+  { id:'q4bRL2', size:'long',  col:'red',  label:'红长I2' },
+  { id:'q4bBL1', size:'long',  col:'blue', label:'蓝长I1' },
+  { id:'q4bBL2', size:'long',  col:'blue', label:'蓝长I2' },
+  { id:'q4bRS1', size:'short', col:'red',  label:'红短I1' },
+  { id:'q4bRS2', size:'short', col:'red',  label:'红短I2' },
+  { id:'q4bBS1', size:'short', col:'blue', label:'蓝短I1' },
+  { id:'q4bBS2', size:'short', col:'blue', label:'蓝短I2' },
 ];
 const Q4_ALL_ITEMS = [...Q4_X_ITEMS, ...Q4_BAR_ITEMS];
 
@@ -2348,16 +3047,12 @@ function q4RenderSperm() {
 
 function q4Reset() { q4SecA=[]; q4SecB=[]; q4Sp=[[],[],[],[]]; clrFB('q4-fb'); q4Build(); }
 
-// ═══════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════
+// 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// INIT
 q1Build();
 q2Build();
 
-// ═══════════════════════════════════════════════════
-// TOUCH SUPPORT — makes drag-and-drop work on tablets (iOS/Android)
+// 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// TOUCH SUPPORT 鈥?makes drag-and-drop work on tablets (iOS/Android)
 // Translates touchstart/touchmove/touchend into dragstart/dragover/drop
-// ═══════════════════════════════════════════════════
 (function() {
   let dragEl = null;       // the element being dragged
   let dragId = null;       // data being transferred
@@ -2689,3 +3384,4 @@ q2Build();
 </script>
 </body>
 </html>
+
