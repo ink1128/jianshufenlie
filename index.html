@@ -1400,17 +1400,17 @@ function q2PoolItemDim(candidate) {
 }
 
 function q2StageScaleFactor(count) {
-  if (count <= 1) return 0.74;
-  if (count === 2) return 0.60;
-  if (count <= 4) return 0.48;
-  if (count <= 6) return 0.40;
-  return 0.34;
+  if (count <= 1) return 0.82;
+  if (count === 2) return 0.68;
+  if (count <= 4) return 0.58;
+  if (count <= 6) return 0.46;
+  return 0.38;
 }
 
 function q2PlacedItemDim(candidate, slotDim, count) {
   const deviceScale = q2StageViewportScale();
   const maxDim = Math.round(
-    slotDim * (count <= 1 ? 0.78 : count === 2 ? 0.66 : count <= 4 ? 0.56 : 0.48) * deviceScale
+    slotDim * (count <= 1 ? 0.84 : count === 2 ? 0.74 : count <= 4 ? 0.64 : 0.54) * deviceScale
   );
   const scaled = Math.round(candidate.poolDim * q2StageScaleFactor(count) * deviceScale);
   return Math.max(16, Math.min(maxDim, scaled));
