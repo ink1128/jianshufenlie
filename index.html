@@ -271,6 +271,98 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   opacity:.88;
   filter:drop-shadow(0 10px 18px rgba(15,23,42,.18));
 }
+.q2-flow-wrap{
+  border:2px dashed #cbd5e1;
+  border-radius:22px;
+  padding:14px;
+  background:#fff;
+}
+.q2-flow-fit{
+  position:relative;
+  width:100%;
+  max-width:1320px;
+  height:580px;
+  margin:0 auto;
+}
+.q2-flow-fit > .q2-flow-stage{
+  position:absolute;
+  left:0;
+  top:0;
+}
+.q2-flow-stage{
+  position:relative;
+  width:1320px;
+  height:580px;
+  border-radius:24px;
+  background:#fff;
+  overflow:hidden;
+  transform-origin:top left;
+}
+.q2-flow-stage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(148,163,184,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,.10) 1px, transparent 1px);
+  background-size:24px 24px;
+  pointer-events:none;
+}
+.q2-flow-svg,
+.q2-flow-annos,
+.q2-flow-layer{
+  position:absolute;
+  inset:0;
+}
+.q2-flow-svg{z-index:1;}
+.q2-flow-annos{
+  pointer-events:none;
+  z-index:2;
+}
+.q2-flow-layer{z-index:3;}
+.q2-palette-wrap{
+  border:2px dashed #cbd5e1;
+  border-radius:22px;
+  padding:14px;
+  background:
+    radial-gradient(circle at top right, rgba(14,165,233,.12), transparent 34%),
+    linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+}
+.q2-palette-wrap .diagram-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:8px;
+  touch-action:pan-x pan-y;
+}
+.q2-pool{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:max-content;
+  gap:14px;
+  min-width:max-content;
+  align-items:end;
+  justify-content:flex-start;
+  padding:8px 4px 8px 2px;
+}
+.q2-pool-item{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:22px;
+  min-height:92px;
+  line-height:0;
+  border:none;
+  background:none;
+  padding:0;
+  cursor:grab;
+  user-select:none;
+  touch-action:manipulation;
+}
+.q2-pool-item.dragging{opacity:.35;}
+.q2-pool-item.q3-touch-dragging .q3-visual{
+  transform:scale(var(--q3-touch-drag-scale, 1));
+  transform-origin:center center;
+}
 /* Inquiry 3 full-flow matching mode */
 .q3-layout{display:flex;flex-direction:column;gap:18px;}
 .q3-flow-wrap,
@@ -295,7 +387,7 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   position:relative;
   width:100%;
   max-width:1320px;
-  height:430px;
+  height:580px;
   margin:0 auto;
 }
 .q3-stage-fit > .q3-stage{
@@ -305,8 +397,8 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 }
 .q3-stage{
   position:relative;
-  width:1280px;
-  height:430px;
+  width:1320px;
+  height:580px;
   border-radius:24px;
   background:#fff;
   overflow:hidden;
@@ -336,7 +428,8 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 .q3-stage-layer{z-index:3;}
 .q3-stage-slot{
   position:absolute;
-  border:3px solid #111827;
+  --q3-slot-stroke:#111827;
+  border:3px solid var(--q3-slot-stroke);
   border-radius:50%;
   background:rgba(255,255,255,.96);
   box-sizing:border-box;
@@ -348,18 +441,47 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   transition:border-color .2s, box-shadow .2s, transform .2s, background .2s;
 }
 .q3-stage-slot.can-drop{
-  border-color:#111827;
+  --q3-slot-stroke:#111827;
   box-shadow:none;
   transform:none;
 }
 .q3-stage-slot.filled{background:rgba(255,255,255,.985);}
 .q3-stage-slot.correct{
-  border-color:#22c55e;
+  --q3-slot-stroke:#22c55e;
   box-shadow:0 0 0 4px rgba(34,197,94,.16);
 }
 .q3-stage-slot.wrong{
-  border-color:#ef4444;
+  --q3-slot-stroke:#ef4444;
   box-shadow:0 0 0 4px rgba(239,68,68,.14);
+}
+.q3-stage-slot.q3-stage-slot-gourd{
+  border:none;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.q3-slot-shape{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+}
+.q3-slot-shape svg{
+  display:block;
+  width:100%;
+  height:100%;
+}
+.q3-slot-shape path{
+  fill:rgba(255,255,255,.985);
+  stroke:var(--q3-slot-stroke);
+  stroke-width:3;
+  vector-effect:non-scaling-stroke;
+}
+.q3-stage-slot.q3-stage-slot-gourd.correct .q3-slot-shape{
+  filter:drop-shadow(0 0 0 rgba(34,197,94,.16)) drop-shadow(0 0 4px rgba(34,197,94,.28));
+}
+.q3-stage-slot.q3-stage-slot-gourd.wrong .q3-slot-shape{
+  filter:drop-shadow(0 0 0 rgba(239,68,68,.14)) drop-shadow(0 0 4px rgba(239,68,68,.24));
 }
 .q3-slot-tip,
 .q3-palette-note{
@@ -705,6 +827,10 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
     gap:6px;
     padding:8px 4px 10px 2px;
   }
+  .q2-pool{
+    gap:10px;
+    padding:6px 2px 8px 2px;
+  }
 }
 </style>
 </head>
@@ -714,65 +840,31 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 <h1>《建立减数分裂中染色体变化模型》交互实验</h1>
 
 <div class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab(0)">模型一</button>
-  <button class="tab-btn" onclick="switchTab(1)">模型二</button>
-  <button class="tab-btn" onclick="switchTab(2)">模型三</button>
-  <button class="tab-btn" onclick="switchTab(3)">模型四</button>
-</div>
-
-<!-- ══ 探究一 ══ -->
-<div class="tab-pane active" id="tab0">
-  <div class="card">
-    <div class="card-title">精子形成的方式</div>
-    <div class="diagram-scroll">
-      <div class="q1-layout">
-        <div class="q1-stage">
-          <div class="q1-stage-main">
-            <div class="col">
-              <div class="cell-label">精原细胞</div>
-              <div class="cell cell-xl"><div class="cell-inner" id="q1-src"></div></div>
-            </div>
-            <div class="col">
-              <div class="arr-label">&nbsp;</div>
-              <div class="arr">→</div>
-            </div>
-            <div class="col">
-              <div class="cell-label">精子</div>
-              <div class="cell cell-xl" id="q1-target"><div class="cell-inner" id="q1-t-inner"><div class="q-mark">?</div></div></div>
-              <div class="dots" id="q1-dots"></div>
-            </div>
-          </div>
-        </div>
-        <div class="q1-pool-wrap">
-          <div class="pool" id="q1-pool" style="justify-content:center;"></div>
-        </div>
-        <div class="helper-note">每次拖入都会生成一个新素材，不会消耗待选区中的原件。拖入的素材点右上角 × 可删除。</div>
-      </div>
-    </div>
-    <div class="actions"><button class="btn" onclick="q1Reset()">↺ 重置</button></div>
-    <div class="feedback" id="q1-fb"></div>
-  </div>
+    <button class="tab-btn active" onclick="switchTab(0)">模型一</button>
+    <button class="tab-btn" onclick="switchTab(1)">模型二</button>
+    <button class="tab-btn" onclick="switchTab(2)">模型三</button>
 </div>
 
 <!-- ══ 探究二 ══ -->
-<div class="tab-pane" id="tab1">
+<div class="tab-pane active" id="tab1">
   <div class="card">
     <div class="card-title">精子形成的大致过程</div>
-    <div class="diagram-scroll">
-      <div class="q2-layout">
-        <div class="q2-stage" id="q2-stage">
-          <div class="q2-origin-card">
-            <div class="cell-label">精原细胞</div>
-            <div class="cell cell-xl q2-origin-cell">
-              <div id="q2-origin-inner" style="width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center;"></div>
+    <div class="q3-layout">
+      <div class="q2-flow-wrap">
+        <div class="diagram-scroll">
+          <div class="q2-flow-fit" id="q2-flow-fit">
+            <div class="q2-flow-stage" id="q2-flow-stage">
+              <svg class="q2-flow-svg" id="q2-flow-svg"></svg>
+              <div class="q2-flow-annos" id="q2-flow-annos"></div>
+              <div class="q2-flow-layer" id="q2-flow-layer"></div>
             </div>
           </div>
-          <div class="q2-stage-layer" id="q2-stage-layer"></div>
         </div>
-        <div class="q2-palette-wrap">
-          <div class="q2-palette-grid" id="q2-palette"></div>
+      </div>
+      <div class="q2-palette-wrap">
+        <div class="diagram-scroll">
+          <div class="q2-pool" id="q2-pool"></div>
         </div>
-        <div class="helper-note">每次拖入都会生成一个新素材，不会消耗待选区中的原件。拖入的素材点右上角 × 可删除。</div>
       </div>
     </div>
     <div class="actions"><button class="btn" onclick="q2Reset()">↺ 重置</button></div>
@@ -990,10 +1082,12 @@ function renderInner(innerId, placed, allChrs, qMark, small) {
 function switchTab(i) {
   document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',i===j));
   document.querySelectorAll('.tab-pane').forEach((p,j)=>p.classList.toggle('active',i===j));
-  if (i === 2) {
+  if (i === 0) {
+    requestAnimationFrame(q2FlowFitStage);
+  } else if (i === 1) {
     if (!q3Built) q3Build();
     requestAnimationFrame(q3FitStage);
-  } else if (i === 3) {
+  } else if (i === 2) {
     if (!q4FlowBuilt) q4FlowBuild();
     requestAnimationFrame(q4FlowFitStage);
   }
@@ -1130,7 +1224,7 @@ function chrBarSVG(data, size) {
   const r = size==='xs' ? 3.5 : size==='sm' ? 4 : 5;
   const s = makeSVG(w, h);
   s.appendChild(svgRect(1, 1, w-2, h-2, 3, '#1ea7d8', '#0f6f94', 1.5));
-  s.appendChild(svgCircle(w/2, h*0.42, r, '#fff', '#64748b', 1.5));
+  s.appendChild(svgCircle(w/2, h*0.42, r, '#1ea7d8', '#0f6f94', 1.5));
   return s;
 }
 
@@ -1148,7 +1242,7 @@ function chrXSVG(data, size) {
       s.appendChild(svgLine(x1,y1,x2,y2,thick+2,'#0f6f94'));
       s.appendChild(svgLine(x1,y1,x2,y2,thick,'#1ea7d8'));
     });
-  s.appendChild(svgCircle(cx, cy, size==='xs'?3:(isLong?5:4), '#fff', '#64748b', 1.5));
+  s.appendChild(svgCircle(cx, cy, size==='xs'?3:(isLong?5:4), '#1ea7d8', '#0f6f94', 1.5));
   return s;
 }
 
@@ -1180,6 +1274,477 @@ let q2NextId = 1;
 let q2ZCounter = 1;
 let q2DragState = null;
 let q2ResizeBound = false;
+const Q2_FLOW_SIZE = { width:1320, height:580 };
+const Q2_FLOW_SLOT_DIM = 120;
+let q2FlowScaleBound = false;
+
+const Q2_FLOW_SLOTS = [
+  { id:'origin',     x:20,   y:220, preset:'origin' },
+  { id:'replicate',  x:250,  y:220, preset:'replicated' },
+  { id:'midTop',     x:560,  y:140, preset:null },
+  { id:'midBottom',  x:560,  y:320, preset:null },
+  { id:'finalA1',    x:1020, y:10,  preset:'final' },
+  { id:'finalA2',    x:1020, y:140, preset:'final' },
+  { id:'finalB1',    x:1020, y:320, preset:'final' },
+  { id:'finalB2',    x:1020, y:450, preset:'final' },
+];
+
+const Q2_FLOW_LINKS = [
+  { d:'M 140 280 L 250 280' },
+  { d:'M 370 280 L 480 280 L 480 200 L 560 200' },
+  { d:'M 370 280 L 480 280 L 480 380 L 560 380' },
+  { d:'M 680 200 L 860 200 L 860 70 L 1020 70' },
+  { d:'M 680 200 L 1020 200' },
+  { d:'M 680 380 L 860 380 L 860 380 L 1020 380' },
+  { d:'M 680 380 L 860 380 L 860 510 L 1020 510' },
+];
+
+const Q2_POOL_ITEMS = [
+  { id:'q2p-xl-1', kind:'xLong',  poolDim:90 },
+  { id:'q2p-xl-2', kind:'xLong',  poolDim:90 },
+  { id:'q2p-xs-1', kind:'xShort', poolDim:62 },
+  { id:'q2p-xs-2', kind:'xShort', poolDim:62 },
+  { id:'q2p-bl-1', kind:'barLong',  poolDim:74 },
+  { id:'q2p-bl-2', kind:'barLong',  poolDim:74 },
+  { id:'q2p-bl-3', kind:'barLong',  poolDim:74 },
+  { id:'q2p-bl-4', kind:'barLong',  poolDim:74 },
+  { id:'q2p-bs-1', kind:'barShort', poolDim:54 },
+  { id:'q2p-bs-2', kind:'barShort', poolDim:54 },
+  { id:'q2p-bs-3', kind:'barShort', poolDim:54 },
+  { id:'q2p-bs-4', kind:'barShort', poolDim:54 },
+];
+
+let q2Placements = {};
+let q2DragCandidateId = null;
+let q2StageNextId = 1;
+let q2StageZCounter = 1;
+let q2StageDragState = null;
+
+function q2InitialPlacements() {
+  return Q2_FLOW_SLOTS.reduce((acc, slot) => {
+    if (!slot.preset) acc[slot.id] = [];
+    return acc;
+  }, {});
+}
+
+function q2SlotById(id) {
+  return Q2_FLOW_SLOTS.find(slot => slot.id === id);
+}
+
+function q2SlotIsPreset(slotId) {
+  const slot = q2SlotById(slotId);
+  return !!(slot && slot.preset);
+}
+
+function q2CandidateById(id) {
+  return Q2_POOL_ITEMS.find(item => item.id === id);
+}
+
+function q2GetSlotItems(slotId) {
+  if (!Array.isArray(q2Placements[slotId])) q2Placements[slotId] = [];
+  return q2Placements[slotId];
+}
+
+function q2FindStageItem(slotId, itemId) {
+  return q2GetSlotItems(slotId).find(item => item.id === itemId);
+}
+
+function q2CollectUsedCandidateIds() {
+  return Object.values(q2Placements).flat().map(item => item.candidateId);
+}
+
+function q2CanAccept(slot, candidate) {
+  return !!(slot && candidate && !slot.preset);
+}
+
+function q2ClearDropHighlights() {
+  Q2_FLOW_SLOTS.forEach(slot => {
+    const el = document.getElementById('q2-slot-' + slot.id);
+    if (el) el.classList.remove('can-drop');
+  });
+}
+
+function q2ReturnToPool(slotId, itemId) {
+  if (!slotId || q2SlotIsPreset(slotId) || !itemId) return;
+  q2Placements[slotId] = q2GetSlotItems(slotId).filter(item => item.id !== itemId);
+  q2RenderPool();
+  q2FlowRenderStage();
+}
+
+function q2PoolDisplayScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.62;
+  if (vw <= 768) return 0.72;
+  if (vw <= 1024) return 0.84;
+  return 1;
+}
+
+function q2TouchDragScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.42;
+  if (vw <= 768) return 0.52;
+  if (vw <= 1024) return 0.64;
+  return 1;
+}
+
+function q2StageViewportScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.94;
+  if (vw <= 768) return 0.97;
+  if (vw <= 1024) return 1;
+  return 1;
+}
+
+function q2PoolItemDim(candidate) {
+  return Math.max(28, Math.round(candidate.poolDim * q2PoolDisplayScale()));
+}
+
+function q2StageScaleFactor(count) {
+  if (count <= 1) return 0.74;
+  if (count === 2) return 0.60;
+  if (count <= 4) return 0.48;
+  if (count <= 6) return 0.40;
+  return 0.34;
+}
+
+function q2PlacedItemDim(candidate, slotDim, count) {
+  const deviceScale = q2StageViewportScale();
+  const maxDim = Math.round(
+    slotDim * (count <= 1 ? 0.78 : count === 2 ? 0.66 : count <= 4 ? 0.56 : 0.48) * deviceScale
+  );
+  const scaled = Math.round(candidate.poolDim * q2StageScaleFactor(count) * deviceScale);
+  return Math.max(16, Math.min(maxDim, scaled));
+}
+
+function q2CandidateNaturalBox(item) {
+  if (!item) return { width: 60, height: 60 };
+  if (item.kind === 'xLong') return { width: 28, height: 60 };
+  if (item.kind === 'xShort') return { width: 24, height: 42 };
+  if (item.kind === 'barLong') return { width: 10, height: 52 };
+  if (item.kind === 'barShort') return { width: 10, height: 32 };
+  return { width: item.poolDim || 60, height: item.poolDim || 60 };
+}
+
+function q2CandidateSvg(item) {
+  if (item.kind === 'xLong') return chrXSVG({ size:'long' }, 'sm');
+  if (item.kind === 'xShort') return chrXSVG({ size:'short' }, 'sm');
+  if (item.kind === 'barLong') return chrBarSVG({ size:'long' }, 'sm');
+  return chrBarSVG({ size:'short' }, 'sm');
+}
+
+function q2CreateCandidateVisual(candidate, dim, mode='pool') {
+  const natural = q2CandidateNaturalBox(candidate);
+  const available = mode === 'stage' ? Math.max(16, dim - 4) : dim;
+  const scale = Math.min(available / natural.width, available / natural.height);
+  const boxWidth = mode === 'stage' ? dim : Math.max(14, Math.round(natural.width * scale));
+  const boxHeight = mode === 'stage' ? dim : Math.max(18, Math.round(natural.height * scale));
+
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-' + mode;
+  outer.style.width = boxWidth + 'px';
+  outer.style.height = boxHeight + 'px';
+
+  const artboard = document.createElement('div');
+  artboard.className = 'q3-visual-artboard';
+  artboard.style.width = boxWidth + 'px';
+  artboard.style.height = boxHeight + 'px';
+  artboard.style.transform = 'none';
+
+  const holder = document.createElement('div');
+  holder.className = 'q3-visual-chr';
+  holder.style.left = '50%';
+  holder.style.top = '50%';
+  holder.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+  const svg = q2CandidateSvg(candidate);
+  svg.style.display = 'block';
+  holder.appendChild(svg);
+  artboard.appendChild(holder);
+  outer.appendChild(artboard);
+  return outer;
+}
+
+function q2RenderPool() {
+  const pool = document.getElementById('q2-pool');
+  if (!pool) return;
+  pool.innerHTML = '';
+
+  const used = new Set(q2CollectUsedCandidateIds());
+  Q2_POOL_ITEMS.filter(item => !used.has(item.id)).forEach(candidate => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'q2-pool-item';
+    btn.draggable = true;
+    btn.dataset.id = candidate.id;
+    btn.appendChild(q2CreateCandidateVisual(candidate, q2PoolItemDim(candidate), 'pool'));
+
+    btn.addEventListener('dragstart', e => {
+      q2DragCandidateId = candidate.id;
+      e.dataTransfer.setData('text/plain', candidate.id);
+      setTimeout(() => btn.classList.add('dragging'), 0);
+    });
+    btn.addEventListener('dragend', () => {
+      btn.classList.remove('dragging');
+      q2DragCandidateId = null;
+      q2ClearDropHighlights();
+    });
+
+    pool.appendChild(btn);
+  });
+}
+
+function q2FlowPlaceSvg(board, svg, opts) {
+  const wrap = document.createElement('div');
+  wrap.className = 'q3-visual-chr';
+  wrap.style.left = opts.x + 'px';
+  wrap.style.top = opts.y + 'px';
+  wrap.style.transform =
+    `translate(-50%, -50%) rotate(${opts.rot || 0}deg) scale(${opts.scale == null ? 1 : opts.scale})`;
+  svg.style.display = 'block';
+  wrap.appendChild(svg);
+  board.appendChild(wrap);
+}
+
+function q2FlowCreateVisual(kind, dim) {
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-stage';
+  outer.style.width = dim + 'px';
+  outer.style.height = dim + 'px';
+
+  const board = document.createElement('div');
+  board.className = 'q3-visual-artboard';
+  board.style.width = dim + 'px';
+  board.style.height = dim + 'px';
+  board.style.transform = 'none';
+
+  if (kind === 'origin') {
+    q2FlowPlaceSvg(board, chrBarSVG({ size:'long' }, 'sm'),  { x:34, y:60 });
+    q2FlowPlaceSvg(board, chrBarSVG({ size:'long' }, 'sm'),  { x:54, y:60 });
+    q2FlowPlaceSvg(board, chrBarSVG({ size:'short' }, 'sm'), { x:82, y:60 });
+    q2FlowPlaceSvg(board, chrBarSVG({ size:'short' }, 'sm'), { x:100, y:60 });
+  } else if (kind === 'replicated') {
+    q2FlowPlaceSvg(board, chrXSVG({ size:'long' }, 'sm'),  { x:35, y:40, rot:-28, scale:1.0 });
+    q2FlowPlaceSvg(board, chrXSVG({ size:'short' }, 'sm'), { x:65, y:52, rot:22,  scale:0.95 });
+    q2FlowPlaceSvg(board, chrXSVG({ size:'short' }, 'sm'), { x:54, y:82, rot:30,  scale:0.95 });
+    q2FlowPlaceSvg(board, chrXSVG({ size:'long' }, 'sm'),  { x:92, y:44, rot:-14, scale:1.0 });
+  } else if (kind === 'final') {
+    q2FlowPlaceSvg(board, chrBarSVG({ size:'long' }, 'sm'),  { x:48, y:60 });
+    q2FlowPlaceSvg(board, chrBarSVG({ size:'short' }, 'sm'), { x:79, y:60 });
+  }
+
+  outer.appendChild(board);
+  return outer;
+}
+
+function q2FlowRenderArrows() {
+  const svg = document.getElementById('q2-flow-svg');
+  if (!svg) return;
+
+  svg.setAttribute('viewBox', `0 0 ${Q2_FLOW_SIZE.width} ${Q2_FLOW_SIZE.height}`);
+  svg.setAttribute('width', Q2_FLOW_SIZE.width);
+  svg.setAttribute('height', Q2_FLOW_SIZE.height);
+  svg.innerHTML = '';
+
+  Q2_FLOW_LINKS.forEach(link => {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', link.d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#111827');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+  });
+}
+
+function q2FlowRenderAnnotations() {
+  const annos = document.getElementById('q2-flow-annos');
+  if (!annos) return;
+
+  annos.innerHTML = `
+    <div class="q3-stage-anno center" style="left:150px;top:206px;width:90px;font-size:24px;font-weight:800;color:#111827;">复制</div>
+    <div class="q3-stage-anno big center" style="left:10px;top:348px;width:140px;white-space:normal;line-height:1.08;">精原细胞</div>
+  `;
+}
+
+function q2FlowRenderStage() {
+  const layer = document.getElementById('q2-flow-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+
+  Q2_FLOW_SLOTS.forEach(slot => {
+    const el = document.createElement('div');
+    el.id = 'q2-slot-' + slot.id;
+    el.className = 'q3-stage-slot';
+    el.style.width = Q2_FLOW_SLOT_DIM + 'px';
+    el.style.height = Q2_FLOW_SLOT_DIM + 'px';
+    el.style.left = slot.x + 'px';
+    el.style.top = slot.y + 'px';
+    el.dataset.droppable = 'true';
+    if (slot.preset) {
+      el.classList.add('filled', 'preset');
+      el.appendChild(q2FlowCreateVisual(slot.preset, Q2_FLOW_SLOT_DIM));
+    } else {
+      const items = q2GetSlotItems(slot.id)
+        .slice()
+        .sort((a, b) => a.z - b.z);
+      if (items.length) el.classList.add('filled');
+
+      const autoCenters = q3AutoCenters(items.length);
+      let autoIndex = 0;
+      items.forEach(item => {
+        const candidate = q2CandidateById(item.candidateId);
+        if (!candidate) return;
+
+        const itemDim = q2PlacedItemDim(candidate, Q2_FLOW_SLOT_DIM, items.length);
+        const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+        const pos = q3ResolveStageItemPos(item, itemDim, Q2_FLOW_SLOT_DIM, autoPos);
+        if (!item.manual) autoIndex += 1;
+
+        const piece = document.createElement('div');
+        piece.className = 'q3-stage-item';
+        piece.dataset.slotId = slot.id;
+        piece.dataset.itemId = item.id;
+        piece.style.width = itemDim + 'px';
+        piece.style.height = itemDim + 'px';
+        piece.style.left = pos.left + 'px';
+        piece.style.top = pos.top + 'px';
+        piece.style.zIndex = item.z;
+
+        const visual = q2CreateCandidateVisual(candidate, itemDim, 'stage');
+        visual.style.pointerEvents = 'none';
+        piece.appendChild(visual);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'q3-stage-remove';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('pointerdown', e => e.stopPropagation());
+        removeBtn.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          q2ReturnToPool(slot.id, item.id);
+        });
+        piece.appendChild(removeBtn);
+
+        piece.addEventListener('pointerdown', e => q2StartStageMove(e, slot.id, item.id, piece));
+        el.appendChild(piece);
+      });
+    }
+
+    el.ondragover = e => {
+      if (!q2CanAccept(slot, q2CandidateById(q2DragCandidateId))) return;
+      e.preventDefault();
+      el.classList.add('can-drop');
+    };
+    el.ondragleave = () => el.classList.remove('can-drop');
+    el.ondrop = e => {
+      e.preventDefault();
+      el.classList.remove('can-drop');
+      q2HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
+    };
+
+    layer.appendChild(el);
+  });
+}
+
+function q2FlowFitStage() {
+  const shell = document.getElementById('q2-flow-fit');
+  const stage = document.getElementById('q2-flow-stage');
+  if (!(shell && stage)) return;
+
+  const parent = shell.parentElement;
+  const availableWidth = parent ? parent.clientWidth : shell.clientWidth;
+  const scale = availableWidth ? Math.min(1, availableWidth / Q2_FLOW_SIZE.width) : 1;
+
+  shell.style.height = (Q2_FLOW_SIZE.height * scale) + 'px';
+  stage.style.transform = `scale(${scale})`;
+}
+
+function q2HandleDrop(slotId, candidateId) {
+  const slot = q2SlotById(slotId);
+  const candidate = q2CandidateById(candidateId);
+  if (!slot || !candidate) return;
+  if (!q2CanAccept(slot, candidate)) return;
+
+  const used = new Set(q2CollectUsedCandidateIds());
+  if (used.has(candidateId)) return;
+
+  q2GetSlotItems(slotId).push({
+    id: 'q2-stage-item-' + q2StageNextId++,
+    candidateId,
+    x: .5,
+    y: .5,
+    manual: false,
+    z: ++q2StageZCounter,
+  });
+  q2RenderPool();
+  q2FlowRenderStage();
+}
+
+function q2FinishStageMove() {
+  q2StageDragState = null;
+  document.removeEventListener('pointermove', q2HandleStagePointerMove);
+  document.removeEventListener('pointerup', q2HandleStagePointerUp);
+  document.removeEventListener('pointercancel', q2HandleStagePointerUp);
+}
+
+function q2StartStageMove(e, slotId, itemId, el) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  if (q2StageDragState) q2FinishStageMove();
+
+  const slotEl = document.getElementById('q2-slot-' + slotId);
+  const item = q2FindStageItem(slotId, itemId);
+  if (!(slotEl && item)) return;
+
+  const rect = el.getBoundingClientRect();
+  item.z = ++q2StageZCounter;
+  item.manual = true;
+  el.style.zIndex = item.z;
+
+  q2StageDragState = {
+    slotId,
+    itemId,
+    el,
+    width: rect.width,
+    height: rect.height,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+  };
+
+  document.addEventListener('pointermove', q2HandleStagePointerMove);
+  document.addEventListener('pointerup', q2HandleStagePointerUp);
+  document.addEventListener('pointercancel', q2HandleStagePointerUp);
+}
+
+function q2HandleStagePointerMove(e) {
+  if (!q2StageDragState) return;
+
+  const { slotId, itemId, el, width, height, offsetX, offsetY } = q2StageDragState;
+  const slotEl = document.getElementById('q2-slot-' + slotId);
+  const slot = q2SlotById(slotId);
+  const item = q2FindStageItem(slotId, itemId);
+  if (!(slotEl && slot && item)) return;
+
+  const slotRect = slotEl.getBoundingClientRect();
+  const maxLeftPx = Math.max(0, slotRect.width - width);
+  const maxTopPx = Math.max(0, slotRect.height - height);
+  const leftPx = q3Clamp(e.clientX - slotRect.left - offsetX, 0, maxLeftPx);
+  const topPx = q3Clamp(e.clientY - slotRect.top - offsetY, 0, maxTopPx);
+  const scaleX = slotRect.width ? Q2_FLOW_SLOT_DIM / slotRect.width : 1;
+  const scaleY = slotRect.height ? Q2_FLOW_SLOT_DIM / slotRect.height : 1;
+
+  el.style.left = (leftPx * scaleX) + 'px';
+  el.style.top = (topPx * scaleY) + 'px';
+
+  item.x = q3Clamp((leftPx + width / 2) / slotRect.width, 0, 1);
+  item.y = q3Clamp((topPx + height / 2) / slotRect.height, 0, 1);
+}
+
+function q2HandleStagePointerUp() {
+  q2FinishStageMove();
+}
 
 function q2RenderOrigin() {
   const origin = document.getElementById('q2-origin-inner');
@@ -1494,19 +2059,21 @@ function q2ClampAllItems() {
 }
 
 function q2Build() {
-  q2FinishDrag();
-  q2Items = [];
-  q2NextId = 1;
-  q2ZCounter = 1;
-
-  q2RenderOrigin();
-  q2RenderPalette();
-  q2RenderStageItems();
+  q2FinishStageMove();
+  q2Placements = q2InitialPlacements();
+  q2DragCandidateId = null;
+  q2StageNextId = 1;
+  q2StageZCounter = 1;
+  q2FlowRenderAnnotations();
+  q2FlowRenderArrows();
+  q2FlowRenderStage();
+  q2RenderPool();
+  q2FlowFitStage();
   clrFB('q2-fb');
 
-  if (!q2ResizeBound) {
-    window.addEventListener('resize', q2ClampAllItems);
-    q2ResizeBound = true;
+  if (!q2FlowScaleBound) {
+    window.addEventListener('resize', q2FlowFitStage);
+    q2FlowScaleBound = true;
   }
 }
 
@@ -1546,48 +2113,39 @@ function q2Children_stub(){}
 
 
 // ═══════════════════════════════════════════════════
-// INQUIRY 3 — full meiosis flow, 1:1 matching into the correct slots
+// INQUIRY 3 — meiosis II and later flow, 1:1 matching into the correct slots
 // ═══════════════════════════════════════════════════
-const Q3_STAGE_SIZE = { width: 1320, height: 430 };
-const Q3_SLOT_DIM = { lg: 74, md: 74, sm: 74 };
+const Q3_STAGE_SIZE = { width: 1320, height: 580 };
+const Q3_SLOT_DIM = { lg: 122, md: 122, sm: 122 };
 let q3ScaleBound = false;
 let q3Built = false;
 
 const Q3_STAGE_SLOTS = [
-  { id:'s0',  kind:'nucleusSimple',  size:'lg', x:6,    y:120, name:'精原细胞',         error:'这里应放入精原细胞。' },
-  { id:'s1',  kind:'nucleusComplex', size:'md', x:176,  y:120, name:'复制后细胞核',     error:'这里应放入复制后细胞核。' },
-  { id:'s2',  kind:'prophase1',      size:'md', x:336,  y:120, name:'减数分裂I前期',    error:'这里对应减数分裂I前期。' },
-  { id:'s3',  kind:'metaphase1',     size:'md', x:496,  y:120, name:'减数分裂I中期',    error:'这里对应减数分裂I中期。' },
-  { id:'s4',  kind:'anaphase1',      size:'md', x:656,  y:120, name:'减数分裂I后期',    error:'这里对应减数分裂I后期。' },
-  { id:'s5',  kind:'secProA',        size:'md', x:786,  y:48,  name:'减数分裂II前期A',  error:'这里应放入上方分支前期。' },
-  { id:'s6',  kind:'meta2A',         size:'md', x:926,  y:48,  name:'减数分裂II中期A',  error:'这里应放入上方分支中期。' },
-  { id:'s7',  kind:'ana2A',          size:'md', x:1066, y:48,  name:'减数分裂II后期A',  error:'这里应放入上方分支后期。' },
-  { id:'s8',  kind:'secProB',        size:'md', x:786,  y:208, name:'减数分裂II前期B',  error:'这里应放入下方分支前期。' },
-  { id:'s9',  kind:'meta2B',         size:'md', x:926,  y:208, name:'减数分裂II中期B',  error:'这里应放入下方分支中期。' },
-  { id:'s10', kind:'ana2B',          size:'md', x:1066, y:208, name:'减数分裂II后期B',  error:'这里应放入下方分支后期。' },
-  { id:'s11', kind:'spermatidA',     size:'md', x:1188, y:6,   name:'精细胞A1',         error:'这里应放入上方精细胞。' },
-  { id:'s12', kind:'spermatidA',     size:'md', x:1188, y:86,  name:'精细胞A2',         error:'这里应放入上方精细胞。' },
-  { id:'s13', kind:'spermatidB',     size:'md', x:1188, y:168, name:'精细胞B1',         error:'这里应放入下方精细胞。' },
-  { id:'s14', kind:'spermatidB',     size:'md', x:1188, y:248, name:'精细胞B2',         error:'这里应放入下方精细胞。' },
+  { id:'s5',  kind:'secProA',        size:'md', x:180,  y:98,  name:'减数分裂II前期A',  error:'这里应放入上方分支前期。' },
+  { id:'s6',  kind:'meta2A',         size:'md', x:430,  y:98,  name:'减数分裂II中期A',  error:'这里应放入上方分支中期。' },
+  { id:'s7',  kind:'ana2A',          size:'md', x:680,  y:78,  w:150, h:162, name:'减数分裂II后期A',  error:'这里应放入上方分支后期。', frame:'gourd' },
+  { id:'s8',  kind:'secProB',        size:'md', x:180,  y:348, name:'减数分裂II前期B',  error:'这里应放入下方分支前期。' },
+  { id:'s9',  kind:'meta2B',         size:'md', x:430,  y:348, name:'减数分裂II中期B',  error:'这里应放入下方分支中期。' },
+  { id:'s10', kind:'ana2B',          size:'md', x:680,  y:328, w:150, h:162, name:'减数分裂II后期B',  error:'这里应放入下方分支后期。', frame:'gourd' },
+  { id:'s11', kind:'spermatidA',     size:'md', x:1090, y:18,  name:'精细胞A1',         error:'这里应放入上方精细胞。' },
+  { id:'s12', kind:'spermatidA',     size:'md', x:1090, y:142, name:'精细胞A2',         error:'这里应放入上方精细胞。' },
+  { id:'s13', kind:'spermatidB',     size:'md', x:1090, y:278, name:'精细胞B1',         error:'这里应放入下方精细胞。' },
+  { id:'s14', kind:'spermatidB',     size:'md', x:1090, y:402, name:'精细胞B2',         error:'这里应放入下方精细胞。' },
 ];
 
 const Q3_STAGE_BACKDROPS = [];
 
 const Q3_STAGE_LINKS = [
-  { d:'M 80 157 L 176 157' },
-  { d:'M 250 157 L 336 157' },
-  { d:'M 410 157 L 496 157' },
-  { d:'M 570 157 L 656 157' },
-  { d:'M 730 157 L 760 157 L 760 85 L 786 85' },
-  { d:'M 730 157 L 760 157 L 760 245 L 786 245' },
-  { d:'M 860 85 L 926 85' },
-  { d:'M 1000 85 L 1066 85' },
-  { d:'M 860 245 L 926 245' },
-  { d:'M 1000 245 L 1066 245' },
-  { d:'M 1140 85 L 1162 85 L 1162 43 L 1188 43' },
-  { d:'M 1140 85 L 1162 85 L 1162 123 L 1188 123' },
-  { d:'M 1140 245 L 1162 245 L 1162 205 L 1188 205' },
-  { d:'M 1140 245 L 1162 245 L 1162 285 L 1188 285' },
+  { d:'M 72 284 L 134 284 L 134 159 L 180 159' },
+  { d:'M 72 284 L 134 284 L 134 409 L 180 409' },
+  { d:'M 302 159 L 430 159' },
+  { d:'M 552 159 L 680 159' },
+  { d:'M 302 409 L 430 409' },
+  { d:'M 552 409 L 680 409' },
+  { d:'M 830 159 L 1000 159 L 1000 79 L 1090 79' },
+  { d:'M 830 159 L 1000 159 L 1000 203 L 1090 203' },
+  { d:'M 830 409 L 1000 409 L 1000 339 L 1090 339' },
+  { d:'M 830 409 L 1000 409 L 1000 463 L 1090 463' },
 ];
 
 const Q3_VISUAL_LIBRARY = {
@@ -1667,8 +2225,8 @@ const Q3_VISUAL_LIBRARY = {
       { shape:'pair', size:'short', col:'red', x:64, y:58, rot:22,  poolSize:'sm' },
     ],
     stageChroms:[
-      { shape:'pair', size:'long',  col:'red', x:46, y:44, rot:-32, stageSize:'stage' },
-      { shape:'pair', size:'short', col:'red', x:57, y:57, rot:18,  stageSize:'stage' },
+      { shape:'pair', size:'long',  col:'red', x:42, y:40, rot:-34, stageSize:'md' },
+      { shape:'pair', size:'short', col:'red', x:64, y:62, rot:20,  stageSize:'md' },
     ],
   },
   secProB: {
@@ -1677,8 +2235,8 @@ const Q3_VISUAL_LIBRARY = {
       { shape:'pair', size:'short', col:'blue', x:64, y:58, rot:22,  poolSize:'sm' },
     ],
     stageChroms:[
-      { shape:'pair', size:'long',  col:'blue', x:46, y:44, rot:-32, stageSize:'stage' },
-      { shape:'pair', size:'short', col:'blue', x:57, y:57, rot:18,  stageSize:'stage' },
+      { shape:'pair', size:'long',  col:'blue', x:42, y:40, rot:-34, stageSize:'md' },
+      { shape:'pair', size:'short', col:'blue', x:64, y:62, rot:20,  stageSize:'md' },
     ],
   },
   meta2A: {
@@ -1735,8 +2293,8 @@ const Q3_VISUAL_LIBRARY = {
       { shape:'bar', size:'short', col:'red', x:62, y:48, rot:90, poolSize:'sm' },
     ],
     stageChroms:[
-      { shape:'bar', size:'long',  col:'red', x:47, y:50, rot:90, stageSize:'stage' },
-      { shape:'bar', size:'short', col:'red', x:58, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'long',  col:'red', x:40, y:50, rot:90, stageSize:'md' },
+      { shape:'bar', size:'short', col:'red', x:66, y:50, rot:90, stageSize:'md' },
     ],
   },
   spermatidB: {
@@ -1745,8 +2303,8 @@ const Q3_VISUAL_LIBRARY = {
       { shape:'bar', size:'short', col:'blue', x:62, y:48, rot:90, poolSize:'sm' },
     ],
     stageChroms:[
-      { shape:'bar', size:'long',  col:'blue', x:47, y:50, rot:90, stageSize:'stage' },
-      { shape:'bar', size:'short', col:'blue', x:58, y:50, rot:90, stageSize:'stage' },
+      { shape:'bar', size:'long',  col:'blue', x:40, y:50, rot:90, stageSize:'md' },
+      { shape:'bar', size:'short', col:'blue', x:66, y:50, rot:90, stageSize:'md' },
     ],
   },
   poolChrom1: {
@@ -1828,8 +2386,6 @@ const Q3_PRESET_ITEMS = [
 const Q3_ITEM_LIBRARY = [...Q3_CANDIDATES, ...Q3_PRESET_ITEMS];
 
 const Q3_PRESET_PLACEMENTS = {
-  s0:'q3-p01',
-  s1:'q3-p02',
   s5:'q3-p03',
   s8:'q3-p04',
   s11:'q3-p05',
@@ -2102,34 +2658,41 @@ function q3TouchDragScale() {
 }
 
 function q3StageScaleFactor(count) {
-  if (count <= 1) return 0.40;
-  if (count === 2) return 0.31;
-  if (count <= 4) return 0.27;
-  if (count <= 6) return 0.23;
-  return 0.20;
+  if (count <= 1) return 0.64;
+  if (count === 2) return 0.56;
+  if (count <= 4) return 0.46;
+  if (count <= 6) return 0.36;
+  return 0.30;
 }
 
 function q3PlacedItemDim(candidate, slotDim, count) {
+  const slotBase = typeof slotDim === 'number'
+    ? slotDim
+    : Math.min(slotDim.width || slotDim.w || 74, slotDim.height || slotDim.h || 74);
   const deviceScale = q3StageViewportScale();
   const maxDim = Math.round(
-    slotDim * (count <= 1 ? 0.60 : count === 2 ? 0.54 : count <= 4 ? 0.47 : 0.40) * deviceScale
+    slotBase * (count <= 1 ? 0.74 : count === 2 ? 0.64 : count <= 4 ? 0.54 : 0.45) * deviceScale
   );
   const scaled = Math.round(candidate.poolDim * q3StageScaleFactor(count) * deviceScale);
   return Math.max(16, Math.min(maxDim, scaled));
 }
 
 function q3ResolveStageItemPos(item, itemDim, slotDim, autoPos) {
-  const min = itemDim / (slotDim * 2);
-  const max = 1 - min;
+  const slotWidth = typeof slotDim === 'number' ? slotDim : (slotDim.width || slotDim.w || 74);
+  const slotHeight = typeof slotDim === 'number' ? slotDim : (slotDim.height || slotDim.h || slotWidth);
+  const minX = itemDim / (slotWidth * 2);
+  const maxX = 1 - minX;
+  const minY = itemDim / (slotHeight * 2);
+  const maxY = 1 - minY;
   const centerX = item.manual ? (item.x ?? .5) : autoPos.x;
   const centerY = item.manual ? (item.y ?? .5) : autoPos.y;
-  const x = q3Clamp(centerX, min, max);
-  const y = q3Clamp(centerY, min, max);
+  const x = q3Clamp(centerX, minX, maxX);
+  const y = q3Clamp(centerY, minY, maxY);
   return {
     x,
     y,
-    left: x * slotDim - itemDim / 2,
-    top: y * slotDim - itemDim / 2,
+    left: x * slotWidth - itemDim / 2,
+    top: y * slotHeight - itemDim / 2,
   };
 }
 
@@ -2596,31 +3159,41 @@ function q3CreateCandidateVisual(candidate, dim, mode='pool') {
   return outer;
 }
 
+function q3CreateGourdSlotShape() {
+  const wrap = document.createElement('div');
+  wrap.className = 'q3-slot-shape';
+  wrap.innerHTML = `
+    <svg viewBox="0 0 150 162" aria-hidden="true" focusable="false">
+      <path d="M75 8
+               C108 8 132 30 132 58
+               C132 72 121 80 103 81
+               C121 82 132 90 132 104
+               C132 132 108 154 75 154
+               C42 154 18 132 18 104
+               C18 90 29 82 47 81
+               C29 80 18 72 18 58
+               C18 30 42 8 75 8 Z"></path>
+    </svg>
+  `;
+  return wrap;
+}
+
 function q3RenderAnnotations() {
   const annos = document.getElementById('q3-stage-annos');
   if (!annos) return;
 
   annos.innerHTML = `
-    <div class="q3-stage-anno big center" style="left:18px;top:198px;width:54px;white-space:normal;line-height:1.08;">精原<br>细胞</div>
-    <div class="q3-stage-anno center" style="left:74px;top:120px;width:108px;font-size:24px;font-weight:800;color:#dc2626;">复制</div>
+    <div class="q3-stage-anno big center" style="left:180px;top:238px;width:122px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:430px;top:238px;width:122px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:680px;top:264px;width:150px;">后期</div>
 
-    <div class="q3-stage-anno big center" style="left:338px;top:208px;width:74px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:498px;top:208px;width:74px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:658px;top:208px;width:74px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:360px;top:250px;width:296px;"></div>
-    <div class="q3-stage-anno center" style="left:400px;top:262px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂I</div>
+    <div class="q3-stage-anno big center" style="left:180px;top:488px;width:122px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:430px;top:488px;width:122px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:680px;top:514px;width:150px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:250px;top:532px;width:580px;"></div>
+    <div class="q3-stage-anno center" style="left:433px;top:546px;width:214px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂II</div>
 
-    <div class="q3-stage-anno big center" style="left:788px;top:136px;width:74px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:928px;top:136px;width:74px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:1068px;top:136px;width:74px;">后期</div>
-
-    <div class="q3-stage-anno big center" style="left:788px;top:296px;width:74px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:928px;top:296px;width:74px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:1068px;top:296px;width:74px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:820px;top:350px;width:292px;"></div>
-    <div class="q3-stage-anno center" style="left:858px;top:362px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂II</div>
-
-    <div class="q3-stage-anno big soft center" style="left:1156px;top:342px;width:126px;">精细胞</div>
+    <div class="q3-stage-anno big soft center" style="left:1096px;top:530px;width:110px;white-space:nowrap;line-height:1.08;">精细胞</div>
   `;
 }
 
@@ -2697,25 +3270,33 @@ function q3RenderStage() {
   {
     Q3_STAGE_SLOTS.forEach(slot => {
       const dim = q3Dim(slot.size);
+      const slotWidth = slot.w || dim;
+      const slotHeight = slot.h || dim;
       const el = document.createElement('div');
       el.id = 'q3-slot-' + slot.id;
       el.className = 'q3-stage-slot';
+      if (slot.frame === 'gourd') el.classList.add('q3-stage-slot-gourd');
       el.style.left = slot.x + 'px';
       el.style.top = slot.y + 'px';
-      el.style.width = dim + 'px';
-      el.style.height = dim + 'px';
+      el.style.width = slotWidth + 'px';
+      el.style.height = slotHeight + 'px';
       el.dataset.droppable = 'true';
+
+      if (slot.frame === 'gourd') {
+        el.appendChild(q3CreateGourdSlotShape());
+      }
 
       const presetCandidateId = Q3_PRESET_PLACEMENTS[slot.id];
       if (presetCandidateId) {
         el.classList.add('filled', 'preset');
         const candidate = q3CandidateById(presetCandidateId);
-        const preview = q3CreateCandidateVisual(candidate, Math.max(38, dim - 4), 'stage');
+        const preview = q3CreateCandidateVisual(candidate, Math.max(38, Math.min(slotWidth, slotHeight) - 4), 'stage');
         preview.style.position = 'absolute';
         preview.style.left = '50%';
         preview.style.top = '50%';
         preview.style.transform = 'translate(-50%, -50%)';
         preview.style.pointerEvents = 'none';
+        preview.style.zIndex = '1';
         el.appendChild(preview);
       } else {
         const items = q3GetSlotItems(slot.id)
@@ -2729,9 +3310,9 @@ function q3RenderStage() {
           const candidate = q3CandidateById(item.candidateId);
           if (!candidate) return;
 
-          const itemDim = q3PlacedItemDim(candidate, dim, items.length);
+          const itemDim = q3PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length);
           const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
-          const pos = q3ResolveStageItemPos(item, itemDim, dim, autoPos);
+          const pos = q3ResolveStageItemPos(item, itemDim, { width:slotWidth, height:slotHeight }, autoPos);
           if (!item.manual) autoIndex += 1;
 
           const piece = document.createElement('div');
@@ -2876,7 +3457,7 @@ function q3Reset() {
   q3Build();
 }
 
-function fullReset() { q1Reset(); q2Reset(); q3Reset(); q4FlowReset(); switchTab(0); }
+function fullReset() { q2Reset(); q3Reset(); q4FlowReset(); switchTab(0); }
 
 
 // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// INQUIRY 4 鈥?same as inquiry 3 but with red/blue color distinction
@@ -3158,23 +3739,15 @@ function q4Reset() { q4SecA=[]; q4SecB=[]; q4Sp=[[],[],[],[]]; clrFB('q4-fb'); q
 // ═══════════════════════════════════════════════════
 // INQUIRY 4 FLOW — homologous chromosomes precise separation
 // ═══════════════════════════════════════════════════
-const Q4_FLOW_STAGE_SIZE = { width: 1320, height: 430 };
-const Q4_FLOW_SLOT_DIM = { lg: 74, md: 74, sm: 74 };
+const Q4_FLOW_STAGE_SIZE = { width: 1320, height: 580 };
+const Q4_FLOW_SLOT_DIM = { lg: 122, md: 122, sm: 122 };
 const Q4_FLOW_STAGE_LINKS = [
-  { d:'M 80 157 L 176 157' },
-  { d:'M 250 157 L 336 157' },
-  { d:'M 410 157 L 496 157' },
-  { d:'M 570 157 L 656 157' },
-  { d:'M 730 157 L 760 157 L 760 85 L 786 85' },
-  { d:'M 730 157 L 760 157 L 760 245 L 786 245' },
-  { d:'M 860 85 L 926 85' },
-  { d:'M 1000 85 L 1066 85' },
-  { d:'M 860 245 L 926 245' },
-  { d:'M 1000 245 L 1066 245' },
-  { d:'M 1140 85 L 1162 85 L 1162 43 L 1188 43' },
-  { d:'M 1140 85 L 1162 85 L 1162 123 L 1188 123' },
-  { d:'M 1140 245 L 1162 245 L 1162 205 L 1188 205' },
-  { d:'M 1140 245 L 1162 245 L 1162 285 L 1188 285' },
+  { d:'M 142 221 L 250 221' },
+  { d:'M 372 221 L 500 221' },
+  { d:'M 622 221 L 750 221' },
+  { d:'M 872 221 L 980 221' },
+  { d:'M 1130 221 L 1160 221 L 1160 91 L 1180 91' },
+  { d:'M 1130 221 L 1160 221 L 1160 381 L 1180 381' },
 ];
 const Q4_POOL_ITEMS = [
   { id:'q4p-rs-cross', shape:'cross', variant:'small', col:'red',  poolDim:74 },
@@ -3191,21 +3764,13 @@ const Q4_POOL_ITEMS = [
   { id:'q4p-bl-open-up', shape:'open-double', variant:'large', col:'blue', direction:'up', poolDim:92 },
 ];
 const Q4_FLOW_SLOTS = [
-  { id:'s0',  size:'lg', x:6,    y:120, preset:'origin' },
-  { id:'s1',  size:'md', x:176,  y:120, preset:'replicated' },
-  { id:'s2',  size:'md', x:336,  y:120, preset:null },
-  { id:'s3',  size:'md', x:496,  y:120, preset:null },
-  { id:'s4',  size:'md', x:656,  y:120, preset:null },
-  { id:'s5',  size:'md', x:786,  y:48,  preset:'secProA' },
-  { id:'s6',  size:'md', x:926,  y:48,  preset:'meta2A' },
-  { id:'s7',  size:'md', x:1066, y:48,  preset:'ana2A' },
-  { id:'s8',  size:'md', x:786,  y:208, preset:'secProB' },
-  { id:'s9',  size:'md', x:926,  y:208, preset:'meta2B' },
-  { id:'s10', size:'md', x:1066, y:208, preset:'ana2B' },
-  { id:'s11', size:'md', x:1188, y:6,   preset:'spermatidA' },
-  { id:'s12', size:'md', x:1188, y:86,  preset:'spermatidA' },
-  { id:'s13', size:'md', x:1188, y:168, preset:'spermatidB' },
-  { id:'s14', size:'md', x:1188, y:248, preset:'spermatidB' },
+  { id:'s0',  size:'lg', x:20,   y:160, preset:'origin' },
+  { id:'s1',  size:'md', x:250,  y:160, preset:'replicated' },
+  { id:'s2',  size:'md', x:500,  y:160, preset:null },
+  { id:'s3',  size:'md', x:750,  y:160, preset:null },
+  { id:'s4',  size:'md', x:980,  y:140, w:150, h:162, preset:null, frame:'gourd' },
+  { id:'s5',  size:'md', x:1180, y:30,  preset:'secProA' },
+  { id:'s8',  size:'md', x:1180, y:320, preset:'secProB' },
 ];
 
 let q4FlowBuilt = false;
@@ -3384,18 +3949,18 @@ function q4FlowCreateVisual(kind, dim) {
   board.style.transform = 'none';
 
   if (kind === 'origin') {
-    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'long',  col:'red'  }, 'xs'), { x:18, y:37 });
-    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'long',  col:'blue' }, 'xs'), { x:30, y:37 });
-    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'short', col:'red'  }, 'xs'), { x:45, y:37 });
-    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'short', col:'blue' }, 'xs'), { x:57, y:37 });
+    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'long',  col:'red'  }, 'sm'), { x:34, y:61 });
+    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'long',  col:'blue' }, 'sm'), { x:52, y:61 });
+    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'short', col:'red'  }, 'sm'), { x:78, y:61 });
+    q4FlowPlaceSvg(board, q4ChrBarSVG({ size:'short', col:'blue' }, 'sm'), { x:96, y:61 });
   } else if (kind === 'replicated') {
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'red'  }, 'xs'), { x:25, y:21, rot:-34, scale:0.96 });
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'red'  }, 'xs'), { x:52, y:19, rot:30,  scale:0.90 });
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'blue' }, 'xs'), { x:27, y:51, rot:32,  scale:0.96 });
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'blue' }, 'xs'), { x:52, y:47, rot:-28, scale:0.90 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'red'  }, 'sm'), { x:36, y:38, rot:-34, scale:0.94 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'red'  }, 'sm'), { x:78, y:32, rot:30,  scale:0.84 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'blue' }, 'sm'), { x:42, y:84, rot:32,  scale:0.94 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'blue' }, 'sm'), { x:82, y:80, rot:-28, scale:0.84 });
   } else if (kind === 'secProA') {
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'red' }, 'xs'), { x:26, y:27, rot:-42, scale:0.92 });
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'red' }, 'xs'), { x:52, y:43, rot:22,  scale:0.84 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'red' }, 'sm'), { x:40, y:44, rot:-42, scale:0.88 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'red' }, 'sm'), { x:80, y:74, rot:22,  scale:0.78 });
   } else if (kind === 'meta2A') {
     q4FlowPlaceSvg(board, q3PoolChromSVG('small', 'red'), { x:28, y:37, scale:0.48 });
     q4FlowPlaceSvg(board, q3PoolChromSVG('small', 'red'), { x:53, y:37, scale:0.32 });
@@ -3405,8 +3970,8 @@ function q4FlowCreateVisual(kind, dim) {
     q4FlowPlaceSvg(board, q3PoolOpenChromSVG('large', 'red', 'up'),   { x:24, y:51, scale:0.36 });
     q4FlowPlaceSvg(board, q3PoolOpenChromSVG('small', 'red', 'up'),   { x:52, y:50, scale:0.30 });
   } else if (kind === 'secProB') {
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'blue' }, 'xs'), { x:26, y:27, rot:-42, scale:0.92 });
-    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'blue' }, 'xs'), { x:52, y:43, rot:22,  scale:0.84 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'long',  col:'blue' }, 'sm'), { x:40, y:44, rot:-42, scale:0.88 });
+    q4FlowPlaceSvg(board, q4ChrXSVG({ size:'short', col:'blue' }, 'sm'), { x:80, y:74, rot:22,  scale:0.78 });
   } else if (kind === 'meta2B') {
     q4FlowPlaceSvg(board, q3PoolChromSVG('small', 'blue'), { x:28, y:37, scale:0.48 });
     q4FlowPlaceSvg(board, q3PoolChromSVG('small', 'blue'), { x:53, y:37, scale:0.32 });
@@ -3456,17 +4021,20 @@ function q4PoolItemDim(candidate) {
 }
 
 function q4StageScaleFactor(count) {
-  if (count <= 1) return 0.43;
-  if (count === 2) return 0.33;
-  if (count <= 4) return 0.40;
-  if (count <= 6) return 0.23;
-  return 0.20;
+  if (count <= 1) return 0.82;
+  if (count === 2) return 0.74;
+  if (count <= 4) return 0.68;
+  if (count <= 6) return 0.50;
+  return 0.40;
 }
 
 function q4PlacedItemDim(candidate, slotDim, count) {
+  const slotBase = typeof slotDim === 'number'
+    ? slotDim
+    : Math.min(slotDim.width || slotDim.w || 74, slotDim.height || slotDim.h || 74);
   const deviceScale = q4StageViewportScale();
   const maxDim = Math.round(
-    slotDim * (count <= 1 ? 0.64 : count === 2 ? 0.55 : count <= 4 ? 0.66 : 0.41) * deviceScale
+    slotBase * (count <= 1 ? 0.90 : count === 2 ? 0.82 : count <= 4 ? 0.72 : 0.58) * deviceScale
   );
   const scaled = Math.round(candidate.poolDim * q4StageScaleFactor(count) * deviceScale);
   return Math.max(16, Math.min(maxDim, scaled));
@@ -3583,26 +4151,17 @@ function q4FlowRenderAnnotations() {
   if (!annos) return;
 
   annos.innerHTML = `
-    <div class="q3-stage-anno big center" style="left:18px;top:198px;width:54px;white-space:normal;line-height:1.08;">精原<br>细胞</div>
-    <div class="q3-stage-anno center" style="left:74px;top:120px;width:108px;font-size:24px;font-weight:800;color:#dc2626;">复制</div>
+    <div class="q3-stage-anno big center" style="left:10px;top:308px;width:140px;white-space:normal;line-height:1.08;">精原细胞</div>
+    <div class="q3-stage-anno center" style="left:146px;top:160px;width:108px;font-size:24px;font-weight:800;color:#dc2626;">复制</div>
 
-    <div class="q3-stage-anno big center" style="left:338px;top:208px;width:74px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:498px;top:208px;width:74px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:658px;top:208px;width:74px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:360px;top:250px;width:296px;"></div>
-    <div class="q3-stage-anno center" style="left:400px;top:262px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂I</div>
+    <div class="q3-stage-anno big center" style="left:500px;top:300px;width:122px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:750px;top:300px;width:122px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:980px;top:326px;width:150px;">后期</div>
+    <div class="q3-stage-bracket-h" style="left:530px;top:354px;width:600px;"></div>
+    <div class="q3-stage-anno center" style="left:722px;top:368px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂I</div>
 
-    <div class="q3-stage-anno big center" style="left:788px;top:136px;width:74px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:928px;top:136px;width:74px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:1068px;top:136px;width:74px;">后期</div>
-
-    <div class="q3-stage-anno big center" style="left:788px;top:296px;width:74px;">前期</div>
-    <div class="q3-stage-anno big center" style="left:928px;top:296px;width:74px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:1068px;top:296px;width:74px;">后期</div>
-    <div class="q3-stage-bracket-h" style="left:820px;top:350px;width:292px;"></div>
-    <div class="q3-stage-anno center" style="left:858px;top:362px;width:216px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂II</div>
-
-    <div class="q3-stage-anno big soft center" style="left:1156px;top:342px;width:126px;">精细胞</div>
+    <div class="q3-stage-anno big center" style="left:1180px;top:164px;width:122px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:1180px;top:454px;width:122px;">前期</div>
   `;
 }
 
@@ -3635,18 +4194,32 @@ function q4FlowRenderStage() {
 
   Q4_FLOW_SLOTS.forEach(slot => {
     const dim = q4FlowDim(slot.size);
+    const slotWidth = slot.w || dim;
+    const slotHeight = slot.h || dim;
     const el = document.createElement('div');
     el.id = 'q4-slot-' + slot.id;
     el.className = 'q3-stage-slot';
-    el.style.width = dim + 'px';
-    el.style.height = dim + 'px';
+    if (slot.frame === 'gourd') el.classList.add('q3-stage-slot-gourd');
+    el.style.width = slotWidth + 'px';
+    el.style.height = slotHeight + 'px';
     el.style.left = slot.x + 'px';
     el.style.top = slot.y + 'px';
     el.dataset.droppable = 'true';
 
+    if (slot.frame === 'gourd') {
+      el.appendChild(q3CreateGourdSlotShape());
+    }
+
     if (slot.preset) {
       el.classList.add('filled', 'preset');
-      el.appendChild(q4FlowCreateVisual(slot.preset, dim));
+      const preview = q4FlowCreateVisual(slot.preset, Math.max(38, Math.min(slotWidth, slotHeight) - 4));
+      preview.style.position = 'absolute';
+      preview.style.left = '50%';
+      preview.style.top = '50%';
+      preview.style.transform = 'translate(-50%, -50%)';
+      preview.style.pointerEvents = 'none';
+      preview.style.zIndex = '1';
+      el.appendChild(preview);
     } else {
       const items = q4GetSlotItems(slot.id)
         .slice()
@@ -3659,9 +4232,9 @@ function q4FlowRenderStage() {
         const candidate = q4CandidateById(item.candidateId);
         if (!candidate) return;
 
-        const itemDim = q4PlacedItemDim(candidate, dim, items.length);
+        const itemDim = q4PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length);
         const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
-        const pos = q3ResolveStageItemPos(item, itemDim, dim, autoPos);
+        const pos = q3ResolveStageItemPos(item, itemDim, { width:slotWidth, height:slotHeight }, autoPos);
         if (!item.manual) autoIndex += 1;
 
         const piece = document.createElement('div');
@@ -3791,13 +4364,14 @@ function q4HandleStagePointerMove(e) {
   if (!(slotEl && slot && item)) return;
 
   const slotRect = slotEl.getBoundingClientRect();
-  const slotDim = q4FlowDim(slot.size);
+  const slotWidth = slot.w || q4FlowDim(slot.size);
+  const slotHeight = slot.h || q4FlowDim(slot.size);
   const maxLeftPx = Math.max(0, slotRect.width - width);
   const maxTopPx = Math.max(0, slotRect.height - height);
   const leftPx = q3Clamp(e.clientX - slotRect.left - offsetX, 0, maxLeftPx);
   const topPx = q3Clamp(e.clientY - slotRect.top - offsetY, 0, maxTopPx);
-  const scaleX = slotRect.width ? slotDim / slotRect.width : 1;
-  const scaleY = slotRect.height ? slotDim / slotRect.height : 1;
+  const scaleX = slotRect.width ? slotWidth / slotRect.width : 1;
+  const scaleY = slotRect.height ? slotHeight / slotRect.height : 1;
 
   el.style.left = (leftPx * scaleX) + 'px';
   el.style.top = (topPx * scaleY) + 'px';
@@ -3835,7 +4409,6 @@ function q4FlowReset() {
 }
 
 // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// INIT
-q1Build();
 q2Build();
 
 // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// TOUCH SUPPORT 鈥?makes drag-and-drop work on tablets (iOS/Android)
@@ -3857,6 +4430,10 @@ q2Build();
 
   function isQ3PoolDrag(el) {
     return !!(el && el.classList && el.classList.contains('q3-pool-item'));
+  }
+
+  function isQ2PoolDrag(el) {
+    return !!(el && el.classList && el.classList.contains('q2-pool-item'));
   }
 
   function isQ4PoolDrag(el) {
@@ -3944,6 +4521,9 @@ q2Build();
         clientX: pendingTouch.currentX,
         clientY: pendingTouch.currentY,
       });
+      if (isQ2PoolDrag(dragEl) && typeof q2DragCandidateId !== 'undefined') {
+        q2DragCandidateId = dragId;
+      }
       if (isQ3PoolDrag(dragEl) && typeof q3DragCandidateId !== 'undefined') {
         q3DragCandidateId = dragId;
       }
@@ -3959,8 +4539,10 @@ q2Build();
   function startDirectTouchDrag(el, touch) {
     const rect = el.getBoundingClientRect();
     const computed = window.getComputedStyle(el);
-    const shrinkForTouch = isQ3PoolDrag(el) || isQ4PoolDrag(el);
-    const dragScale = isQ4PoolDrag(el)
+    const shrinkForTouch = isQ2PoolDrag(el) || isQ3PoolDrag(el) || isQ4PoolDrag(el);
+    const dragScale = isQ2PoolDrag(el)
+      ? q2TouchDragScale()
+      : isQ4PoolDrag(el)
       ? q4TouchDragScale()
       : (shrinkForTouch ? q3TouchDragScale() : 1);
 
@@ -4072,8 +4654,14 @@ q2Build();
     if (typeof q3DragCandidateId !== 'undefined') {
       q3DragCandidateId = null;
     }
+    if (typeof q2DragCandidateId !== 'undefined') {
+      q2DragCandidateId = null;
+    }
     if (typeof q4DragCandidateId !== 'undefined') {
       q4DragCandidateId = null;
+    }
+    if (typeof q2ClearDropHighlights === 'function') {
+      q2ClearDropHighlights();
     }
     if (typeof q3ClearDropHighlights === 'function') {
       q3ClearDropHighlights();
@@ -4119,7 +4707,7 @@ q2Build();
     const el = findDraggable(document.elementFromPoint(touch.clientX, touch.clientY));
     if (!el) return;
 
-    if (isQ3PoolDrag(el) || isQ4PoolDrag(el)) {
+    if (isQ2PoolDrag(el) || isQ3PoolDrag(el) || isQ4PoolDrag(el)) {
       queuePendingQ3Drag(el, touch);
       return;
     }
