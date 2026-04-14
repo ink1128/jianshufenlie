@@ -541,6 +541,9 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
   transform:scale(var(--q3-touch-drag-scale, 1));
   transform-origin:center center;
 }
+.prep-pool-item{
+  cursor:grab;
+}
 .q3-visual{
   position:relative;
   display:flex;
@@ -840,13 +843,40 @@ h1{font-size:clamp(15px,3.5vw,26px);font-weight:800;margin-bottom:16px;line-heig
 <h1>《建立减数分裂中染色体变化模型》交互实验</h1>
 
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab(0)">模型一</button>
-    <button class="tab-btn" onclick="switchTab(1)">模型二</button>
-    <button class="tab-btn" onclick="switchTab(2)">模型三</button>
+    <button class="tab-btn active" onclick="switchTab(0)">课前准备</button>
+    <button class="tab-btn" onclick="switchTab(1)">模型一</button>
+    <button class="tab-btn" onclick="switchTab(2)">模型二</button>
+    <button class="tab-btn" onclick="switchTab(3)">模型三</button>
+</div>
+
+<!-- ══ 课前准备 ══ -->
+<div class="tab-pane active" id="tab0">
+  <div class="card">
+    <div class="card-title">有丝分裂模型建构</div>
+    <div class="q3-layout">
+      <div class="q3-flow-wrap">
+        <div class="diagram-scroll">
+          <div class="q3-stage-fit" id="prep-stage-fit">
+            <div class="q3-stage" id="prep-stage">
+              <svg class="q3-stage-svg" id="prep-stage-svg"></svg>
+              <div class="q3-stage-annos" id="prep-stage-annos"></div>
+              <div class="q3-stage-layer" id="prep-stage-layer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="q3-palette-wrap">
+        <div class="diagram-scroll">
+          <div class="q4-pool" id="prep-pool"></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions"><button class="btn" onclick="qPrepReset()">↺ 重置</button></div>
+  </div>
 </div>
 
 <!-- ══ 探究二 ══ -->
-<div class="tab-pane active" id="tab1">
+<div class="tab-pane" id="tab1">
   <div class="card">
     <div class="card-title">精子形成的基本环节</div>
     <div class="q3-layout">
@@ -1077,17 +1107,785 @@ function renderInner(innerId, placed, allChrs, qMark, small) {
 }
 
 // ═══════════════════════════════════════════════════
+// PRE-CLASS PREP
+// ═══════════════════════════════════════════════════
+const QPREP_STAGE_SIZE = { width:1320, height:430 };
+const QPREP_SLOT_DIM = { sm:104, md:122, lg:136 };
+const QPREP_STAGE_SLOTS = [
+  { id:'s0', x:18,   y:94, size:'sm', preset:'origin' },
+  { id:'s1', x:180,  y:78, size:'lg', preset:'interphase' },
+  { id:'s2', x:398,  y:78, size:'lg', preset:'prophase' },
+  { id:'s3', x:620,  y:88, size:'md', preset:null },
+  { id:'s4', x:818,  y:68, w:150, h:162, frame:'gourd', preset:null },
+  { id:'s5', x:994,  y:68, w:150, h:162, frame:'gourd', preset:'telophase' },
+  { id:'s6', x:1202, y:34, size:'sm', preset:'daughter' },
+  { id:'s7', x:1202, y:190, size:'sm', preset:'daughter' },
+];
+const QPREP_STAGE_LINKS = [
+  { d:'M 122 146 L 180 146' },
+  { d:'M 316 146 L 398 146' },
+  { d:'M 534 146 L 620 146' },
+  { d:'M 742 149 L 818 149' },
+  { d:'M 968 149 L 994 149' },
+  { d:'M 1144 149 L 1178 149 L 1178 86 L 1202 86' },
+  { d:'M 1144 149 L 1178 149 L 1178 242 L 1202 242' },
+];
+
+let qPrepBuilt = false;
+let qPrepScaleBound = false;
+let qPrepPlacements = {};
+let qPrepDragCandidateId = null;
+let qPrepStageNextId = 1;
+let qPrepStageZCounter = 1;
+let qPrepStageDragState = null;
+const QPREP_ASSETS = {
+  origin: './images/prep-origin.webp',
+  interphase: './images/prep-interphase.webp',
+  telophase: './images/prep-telophase.webp',
+};
+const QPREP_POOL_ITEMS = [
+  { id:'prep-x-s-1', shape:'x', size:'short', poolDim:62 },
+  { id:'prep-x-l-1', shape:'x', size:'long',  poolDim:92 },
+  { id:'prep-x-l-2', shape:'x', size:'long',  poolDim:92 },
+  { id:'prep-x-s-2', shape:'x', size:'short', poolDim:62 },
+  { id:'prep-open-dl-1', shape:'open', variant:'large', direction:'down', poolDim:106 },
+  { id:'prep-open-dl-2', shape:'open', variant:'large', direction:'down', poolDim:106 },
+  { id:'prep-open-ds-1', shape:'open', variant:'small', direction:'down', poolDim:72 },
+  { id:'prep-open-ds-2', shape:'open', variant:'small', direction:'down', poolDim:72 },
+  { id:'prep-open-ul-1', shape:'open', variant:'large', direction:'up',   poolDim:106 },
+  { id:'prep-open-ul-2', shape:'open', variant:'large', direction:'up',   poolDim:106 },
+  { id:'prep-open-us-1', shape:'open', variant:'small', direction:'up',   poolDim:72 },
+  { id:'prep-open-us-2', shape:'open', variant:'small', direction:'up',   poolDim:72 },
+];
+
+function qPrepDim(size) {
+  return QPREP_SLOT_DIM[size] || QPREP_SLOT_DIM.md;
+}
+
+function qPrepPoolDisplayScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.70;
+  if (vw <= 768) return 0.82;
+  if (vw <= 1024) return 0.92;
+  return 1;
+}
+
+function qPrepPoolItemDim(item) {
+  return Math.max(36, Math.round(item.poolDim * qPrepPoolDisplayScale()));
+}
+
+function qPrepTouchDragScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.34;
+  if (vw <= 768) return 0.42;
+  if (vw <= 1024) return 0.56;
+  return 1;
+}
+
+function qPrepStageViewportScale() {
+  const vw = q3ViewportWidth();
+  if (vw <= 480) return 0.92;
+  if (vw <= 768) return 0.96;
+  if (vw <= 1024) return 0.99;
+  return 1;
+}
+
+function qPrepPoolNaturalBox(item) {
+  if (item.shape === 'x') {
+    return item.size === 'long'
+      ? { width: 28, height: 60 }
+      : { width: 24, height: 42 };
+  }
+  return item.variant === 'large'
+    ? { width: 106, height: 54 }
+    : { width: 70, height: 36 };
+}
+
+function qPrepPoolSvg(item) {
+  if (item.shape === 'x') {
+    return q4ChrXSVG({ size:item.size, col:'blue' }, 'sm');
+  }
+  return q3PoolOpenChromSVG(item.variant, 'blue', item.direction);
+}
+
+function qPrepCreateCandidateVisual(item, dim, mode='pool') {
+  const natural = qPrepPoolNaturalBox(item);
+  const available = mode === 'stage' ? Math.max(16, dim - 4) : dim;
+  const scale = Math.min(available / natural.width, available / natural.height);
+  const boxWidth = mode === 'stage' ? dim : Math.max(18, Math.round(natural.width * scale));
+  const boxHeight = mode === 'stage' ? dim : Math.max(18, Math.round(natural.height * scale));
+
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-' + mode;
+  outer.style.width = boxWidth + 'px';
+  outer.style.height = boxHeight + 'px';
+
+  const artboard = document.createElement('div');
+  artboard.className = 'q3-visual-artboard';
+  artboard.style.width = boxWidth + 'px';
+  artboard.style.height = boxHeight + 'px';
+  artboard.style.transform = 'none';
+
+  const holder = document.createElement('div');
+  holder.className = 'q3-visual-chr';
+  holder.style.left = '50%';
+  holder.style.top = '50%';
+  holder.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+  const svg = qPrepPoolSvg(item);
+  svg.style.display = 'block';
+  holder.appendChild(svg);
+  artboard.appendChild(holder);
+  outer.appendChild(artboard);
+  return outer;
+}
+
+function qPrepCandidateById(id) {
+  return QPREP_POOL_ITEMS.find(item => item.id === id);
+}
+
+function qPrepInitialPlacements() {
+  return QPREP_STAGE_SLOTS.reduce((acc, slot) => {
+    if (!slot.preset) acc[slot.id] = [];
+    return acc;
+  }, {});
+}
+
+function qPrepSlotById(id) {
+  return QPREP_STAGE_SLOTS.find(slot => slot.id === id);
+}
+
+function qPrepGetSlotItems(slotId) {
+  if (!Array.isArray(qPrepPlacements[slotId])) qPrepPlacements[slotId] = [];
+  return qPrepPlacements[slotId];
+}
+
+function qPrepFindStageItem(slotId, itemId) {
+  return qPrepGetSlotItems(slotId).find(item => item.id === itemId);
+}
+
+function qPrepCollectUsedCandidateIds() {
+  return Object.values(qPrepPlacements).flat().map(item => item.candidateId);
+}
+
+function qPrepCanAccept(slot, candidate) {
+  return !!(slot && candidate && !slot.preset);
+}
+
+function qPrepClearDropHighlights() {
+  QPREP_STAGE_SLOTS.forEach(slot => {
+    const el = document.getElementById('prep-slot-' + slot.id);
+    if (el) el.classList.remove('can-drop');
+  });
+}
+
+function qPrepStageScaleFactor(count) {
+  if (count <= 1) return 0.84;
+  if (count === 2) return 0.74;
+  if (count <= 4) return 0.66;
+  if (count <= 6) return 0.52;
+  return 0.42;
+}
+
+function qPrepAutoCenters(slot, count) {
+  if (!(slot && slot.frame === 'gourd')) return q3AutoCenters(count);
+
+  if (count <= 1) return [{ x:0.50, y:0.28 }];
+  if (count === 2) return [{ x:0.36, y:0.28 }, { x:0.64, y:0.72 }];
+  if (count === 3) return [{ x:0.28, y:0.28 }, { x:0.50, y:0.28 }, { x:0.72, y:0.72 }];
+  if (count === 4) return [
+    { x:0.34, y:0.28 }, { x:0.66, y:0.28 },
+    { x:0.34, y:0.72 }, { x:0.66, y:0.72 },
+  ];
+  if (count === 5) return [
+    { x:0.24, y:0.28 }, { x:0.50, y:0.28 }, { x:0.76, y:0.28 },
+    { x:0.38, y:0.72 }, { x:0.62, y:0.72 },
+  ];
+  if (count === 6) return [
+    { x:0.24, y:0.28 }, { x:0.50, y:0.28 }, { x:0.76, y:0.28 },
+    { x:0.24, y:0.72 }, { x:0.50, y:0.72 }, { x:0.76, y:0.72 },
+  ];
+  if (count === 7) return [
+    { x:0.18, y:0.28 }, { x:0.40, y:0.28 }, { x:0.60, y:0.28 }, { x:0.82, y:0.28 },
+    { x:0.24, y:0.72 }, { x:0.50, y:0.72 }, { x:0.76, y:0.72 },
+  ];
+  return [
+    { x:0.18, y:0.28 }, { x:0.40, y:0.28 }, { x:0.60, y:0.28 }, { x:0.82, y:0.28 },
+    { x:0.18, y:0.72 }, { x:0.40, y:0.72 }, { x:0.60, y:0.72 }, { x:0.82, y:0.72 },
+  ];
+}
+
+function qPrepPlacedItemDim(candidate, slotDim, count, slot=null) {
+  if (slot && slot.frame === 'gourd') {
+    const natural = qPrepPoolNaturalBox(candidate);
+    const contentBase = Math.max(natural.width, natural.height);
+    const largePenalty = (candidate.variant === 'large' || candidate.size === 'long') ? 0.92 : 1;
+    const shapePenalty = candidate.shape === 'open' ? 0.98 : 1;
+    const slotBase = Math.min(slotDim.width || slotDim.w || 150, slotDim.height || slotDim.h || 162);
+    const deviceScale = qPrepStageViewportScale();
+    const gourdBoost = 1.18;
+    const maxDim = Math.round(
+      slotBase * (count <= 1 ? 0.56 : count === 2 ? 0.48 : count <= 4 ? 0.42 : count <= 6 ? 0.36 : 0.32) * gourdBoost * deviceScale
+    );
+    const scaled = Math.round(
+      contentBase * (count <= 1 ? 1.04 : count === 2 ? 0.86 : count <= 4 ? 0.72 : count <= 6 ? 0.58 : 0.48) * gourdBoost * largePenalty * shapePenalty * deviceScale
+    );
+    return Math.max(10, Math.min(maxDim, scaled));
+  }
+
+  const slotBase = typeof slotDim === 'number'
+    ? slotDim
+    : Math.min(slotDim.width || slotDim.w || 74, slotDim.height || slotDim.h || 74);
+  const deviceScale = qPrepStageViewportScale();
+  const maxDim = Math.round(
+    slotBase * (count <= 1 ? 0.90 : count === 2 ? 0.80 : count <= 4 ? 0.70 : 0.58) * deviceScale
+  );
+  const scaled = Math.round(candidate.poolDim * qPrepStageScaleFactor(count) * deviceScale);
+  return Math.max(16, Math.min(maxDim, scaled));
+}
+
+function qPrepStageContentBox(candidate, dim) {
+  const natural = qPrepPoolNaturalBox(candidate);
+  const available = Math.max(16, dim - 4);
+  const scale = Math.min(available / natural.width, available / natural.height);
+  return {
+    width: Math.max(12, Math.round(natural.width * scale)),
+    height: Math.max(12, Math.round(natural.height * scale)),
+  };
+}
+
+function qPrepRenderPool() {
+  const pool = document.getElementById('prep-pool');
+  if (!pool) return;
+  pool.innerHTML = '';
+
+  const used = new Set(qPrepCollectUsedCandidateIds());
+  QPREP_POOL_ITEMS.filter(item => !used.has(item.id)).forEach(item => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'q4-pool-item prep-pool-item';
+    btn.draggable = true;
+    btn.dataset.id = item.id;
+    btn.tabIndex = -1;
+    btn.appendChild(qPrepCreateCandidateVisual(item, qPrepPoolItemDim(item), 'pool'));
+
+    btn.addEventListener('dragstart', e => {
+      qPrepDragCandidateId = item.id;
+      e.dataTransfer.setData('text/plain', item.id);
+      setTimeout(() => btn.classList.add('dragging'), 0);
+    });
+    btn.addEventListener('dragend', () => {
+      btn.classList.remove('dragging');
+      qPrepDragCandidateId = null;
+      qPrepClearDropHighlights();
+    });
+
+    pool.appendChild(btn);
+  });
+}
+
+function qPrepPlaceNode(host, node, left, top, rotate=0) {
+  node.style.position = 'absolute';
+  node.style.left = left + 'px';
+  node.style.top = top + 'px';
+  node.style.transformOrigin = 'center center';
+  if (rotate) node.style.transform = `rotate(${rotate}deg)`;
+  host.appendChild(node);
+}
+
+function qPrepImageVisual(src, width, height, scale=0.86) {
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-stage';
+  outer.style.width = width + 'px';
+  outer.style.height = height + 'px';
+
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = '';
+  img.loading = 'eager';
+  img.decoding = 'async';
+  img.draggable = false;
+  img.style.position = 'absolute';
+  img.style.left = '50%';
+  img.style.top = '50%';
+  img.style.transform = 'translate(-50%, -50%)';
+  img.style.width = Math.round(width * scale) + 'px';
+  img.style.height = Math.round(height * scale) + 'px';
+  img.style.objectFit = 'contain';
+  img.style.pointerEvents = 'none';
+  outer.appendChild(img);
+
+  return outer;
+}
+
+function qPrepChromatinStrandSVG(width, height, bend=5, stroke='#7aa9ef', strokeWidth=3.2) {
+  const svg = makeSVG(width, height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const cx = width / 2;
+  const top = 4;
+  const bottom = height - 4;
+  const y1 = height * 0.24;
+  const y2 = height * 0.5;
+  const y3 = height * 0.76;
+  path.setAttribute('d', `M ${cx} ${top} C ${cx - bend} ${y1}, ${cx + bend} ${y1 + height*0.10}, ${cx} ${y2} C ${cx - bend} ${y3 - height*0.10}, ${cx + bend} ${y3}, ${cx} ${bottom}`);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', stroke);
+  path.setAttribute('stroke-width', strokeWidth);
+  path.setAttribute('stroke-linecap', 'round');
+  path.setAttribute('stroke-linejoin', 'round');
+  svg.appendChild(path);
+  return svg;
+}
+
+function qPrepAddStrands(board, strands) {
+  strands.forEach(item => {
+    const strand = qPrepChromatinStrandSVG(item.w, item.h, item.bend, item.stroke, item.sw);
+    qPrepPlaceNode(board, strand, item.x, item.y, item.rot || 0);
+  });
+}
+
+function qPrepAddCluster(board, cx, cy, scale=1) {
+  const stroke = '#6e9de8';
+  qPrepAddStrands(board, [
+    { x:cx - 20*scale, y:cy - 14*scale, w:14*scale, h:34*scale, rot:-26, bend:3.2*scale, sw:3.4*scale, stroke },
+    { x:cx - 4*scale,  y:cy - 18*scale, w:14*scale, h:38*scale, rot:-8,  bend:3.0*scale, sw:3.4*scale, stroke },
+    { x:cx + 10*scale, y:cy - 12*scale, w:14*scale, h:32*scale, rot:14,  bend:2.8*scale, sw:3.2*scale, stroke },
+    { x:cx - 8*scale,  y:cy - 6*scale,  w:12*scale, h:28*scale, rot:30,  bend:2.4*scale, sw:3.0*scale, stroke },
+  ]);
+}
+
+function qPrepBarSVG(kind='long', centerFill='#111827') {
+  const isLong = kind === 'long';
+  const h = isLong ? 58 : 34;
+  const w = isLong ? 12 : 10;
+  const r = isLong ? 4.2 : 3.6;
+  const s = makeSVG(w, h);
+  s.appendChild(svgRect(1, 1, w - 2, h - 2, 3, '#1ea7d8', '#0f6f94', 1.5));
+  s.appendChild(svgCircle(w / 2, h * 0.42, r, centerFill, '#0f172a', 1.1));
+  return s;
+}
+
+function qPrepXSVG(kind='long') {
+  const isLong = kind === 'long';
+  const arm = isLong ? 28 : 18;
+  const sp = isLong ? 8 : 5.5;
+  const thick = isLong ? 6.2 : 4.8;
+  const W = sp * 2 + 16;
+  const H = arm * 2 + 10;
+  const cx = W / 2;
+  const cy = H / 2;
+  const s = makeSVG(W, H);
+  [[cx,cy,cx-sp,cy-arm],[cx,cy,cx+sp,cy-arm],[cx,cy,cx-sp,cy+arm],[cx,cy,cx+sp,cy+arm]]
+    .forEach(([x1,y1,x2,y2]) => {
+      s.appendChild(svgLine(x1, y1, x2, y2, thick + 2, '#0f6f94'));
+      s.appendChild(svgLine(x1, y1, x2, y2, thick, '#1ea7d8'));
+    });
+  s.appendChild(svgCircle(cx, cy, isLong ? 4.8 : 4, '#1ea7d8', '#0f6f94', 1.1));
+  return s;
+}
+
+function qPrepAddDenseChromatinCluster(board, cx, cy, scale=1) {
+  const stroke = '#6e9de8';
+  qPrepAddStrands(board, [
+    { x:cx - 22*scale, y:cy - 22*scale, w:12*scale, h:28*scale, rot:-30, bend:2.6*scale, sw:3.8*scale, stroke },
+    { x:cx - 12*scale, y:cy - 26*scale, w:12*scale, h:34*scale, rot:-8,  bend:2.2*scale, sw:4.0*scale, stroke },
+    { x:cx - 2*scale,  y:cy - 18*scale, w:12*scale, h:28*scale, rot:18,  bend:2.0*scale, sw:3.8*scale, stroke },
+    { x:cx + 8*scale,  y:cy - 24*scale, w:12*scale, h:32*scale, rot:34,  bend:2.3*scale, sw:4.0*scale, stroke },
+    { x:cx - 16*scale, y:cy - 8*scale,  w:12*scale, h:26*scale, rot:-40, bend:2.0*scale, sw:3.6*scale, stroke },
+    { x:cx - 4*scale,  y:cy - 6*scale,  w:12*scale, h:24*scale, rot:-14, bend:1.8*scale, sw:3.6*scale, stroke },
+    { x:cx + 6*scale,  y:cy - 8*scale,  w:12*scale, h:24*scale, rot:16,  bend:1.8*scale, sw:3.6*scale, stroke },
+  ]);
+}
+
+function qPrepCreateVisual(kind, dims) {
+  const width = dims.width || dims;
+  const height = dims.height || dims;
+
+  if (kind === 'origin') return qPrepImageVisual(QPREP_ASSETS.origin, width, height, 0.84);
+  if (kind === 'interphase') return qPrepImageVisual(QPREP_ASSETS.interphase, width, height, 0.86);
+  if (kind === 'daughter') return qPrepImageVisual(QPREP_ASSETS.origin, width, height, 0.84);
+  if (kind === 'telophase') return qPrepImageVisual(QPREP_ASSETS.telophase, width, height, 0.80);
+
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-stage';
+  outer.style.width = width + 'px';
+  outer.style.height = height + 'px';
+
+  const board = document.createElement('div');
+  board.style.position = 'relative';
+  board.style.width = width + 'px';
+  board.style.height = height + 'px';
+
+  if (kind === 'prophase') {
+    qPrepPlaceNode(board, q4ChrXSVG({ size:'long',  col:'blue' }, 'sm'), Math.round(width * 0.17), Math.round(height * 0.14), -18);
+    qPrepPlaceNode(board, q4ChrXSVG({ size:'short', col:'blue' }, 'sm'), Math.round(width * 0.60), Math.round(height * 0.18), 18);
+    qPrepPlaceNode(board, q4ChrXSVG({ size:'long',  col:'blue' }, 'sm'), Math.round(width * 0.52), Math.round(height * 0.40), 10);
+    qPrepPlaceNode(board, q4ChrXSVG({ size:'short', col:'blue' }, 'sm'), Math.round(width * 0.28), Math.round(height * 0.50), -28);
+  }
+
+  outer.appendChild(board);
+  return outer;
+}
+
+function qPrepRenderAnnotations() {
+  const annos = document.getElementById('prep-stage-annos');
+  if (!annos) return;
+
+  annos.innerHTML = `
+    <div class="q3-stage-anno big center" style="left:0px;top:212px;width:140px;">精原细胞</div>
+    <div class="q3-stage-anno big center" style="left:174px;top:232px;width:148px;">间期</div>
+    <div class="q3-stage-anno big center" style="left:402px;top:232px;width:132px;">前期</div>
+    <div class="q3-stage-anno big center" style="left:620px;top:242px;width:122px;">中期</div>
+    <div class="q3-stage-anno big center" style="left:818px;top:250px;width:150px;">后期</div>
+    <div class="q3-stage-anno big center" style="left:994px;top:250px;width:150px;">末期</div>
+    <div class="q3-stage-bracket-h" style="left:430px;top:292px;width:640px;"></div>
+    <div class="q3-stage-anno center" style="left:657px;top:306px;width:186px;font-size:22px;font-weight:800;color:#111827;">有丝分裂</div>
+    <div class="q3-stage-anno big soft center" style="left:1162px;top:316px;width:180px;white-space:nowrap;">精原细胞</div>
+  `;
+}
+
+function qPrepRenderArrows() {
+  const svg = document.getElementById('prep-stage-svg');
+  const stage = document.getElementById('prep-stage');
+  if (!(svg && stage)) return;
+
+  stage.style.width = QPREP_STAGE_SIZE.width + 'px';
+  stage.style.height = QPREP_STAGE_SIZE.height + 'px';
+  svg.setAttribute('viewBox', `0 0 ${QPREP_STAGE_SIZE.width} ${QPREP_STAGE_SIZE.height}`);
+  svg.setAttribute('width', QPREP_STAGE_SIZE.width);
+  svg.setAttribute('height', QPREP_STAGE_SIZE.height);
+  svg.innerHTML = '';
+
+  QPREP_STAGE_LINKS.forEach(link => {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', link.d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#111827');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+  });
+}
+
+function qPrepRenderStage() {
+  const layer = document.getElementById('prep-stage-layer');
+  const stage = document.getElementById('prep-stage');
+  if (!(layer && stage)) return;
+
+  stage.style.width = QPREP_STAGE_SIZE.width + 'px';
+  stage.style.height = QPREP_STAGE_SIZE.height + 'px';
+  layer.innerHTML = '';
+
+  QPREP_STAGE_SLOTS.forEach(slot => {
+    const dim = qPrepDim(slot.size);
+    const slotWidth = slot.w || dim;
+    const slotHeight = slot.h || dim;
+    const el = document.createElement('div');
+    el.id = 'prep-slot-' + slot.id;
+    el.className = 'q3-stage-slot';
+    if (slot.frame === 'gourd') el.classList.add('q3-stage-slot-gourd');
+    el.style.left = slot.x + 'px';
+    el.style.top = slot.y + 'px';
+    el.style.width = slotWidth + 'px';
+    el.style.height = slotHeight + 'px';
+    el.dataset.droppable = 'true';
+
+    if (slot.frame === 'gourd') {
+      el.appendChild(q3CreateGourdSlotShape());
+    }
+
+    if (slot.preset) {
+      el.classList.add('filled', 'preset');
+      const preview = qPrepCreateVisual(slot.preset, { width:slotWidth, height:slotHeight });
+      preview.style.position = 'absolute';
+      preview.style.left = '50%';
+      preview.style.top = '50%';
+      preview.style.transform = 'translate(-50%, -50%)';
+      preview.style.pointerEvents = 'none';
+      preview.style.zIndex = '1';
+      el.appendChild(preview);
+    } else {
+      const items = qPrepGetSlotItems(slot.id)
+        .slice()
+        .sort((a, b) => a.z - b.z);
+      if (items.length) el.classList.add('filled');
+
+      const autoCenters = qPrepAutoCenters(slot, items.length);
+      let autoIndex = 0;
+      items.forEach(item => {
+        const candidate = qPrepCandidateById(item.candidateId);
+        if (!candidate) return;
+
+        const itemDim = qPrepPlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length, slot);
+        const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+        const pos = q3ResolveStageItemPos(item, itemDim, { width:slotWidth, height:slotHeight }, autoPos);
+        if (!item.manual) autoIndex += 1;
+
+        const piece = document.createElement('div');
+        piece.className = 'q3-stage-item';
+        piece.dataset.slotId = slot.id;
+        piece.dataset.itemId = item.id;
+        piece.style.width = itemDim + 'px';
+        piece.style.height = itemDim + 'px';
+        piece.style.left = pos.left + 'px';
+        piece.style.top = pos.top + 'px';
+        piece.style.zIndex = item.z;
+
+        const visual = qPrepCreateCandidateVisual(candidate, itemDim, 'stage');
+        visual.style.pointerEvents = 'none';
+        piece.appendChild(visual);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'q3-stage-remove';
+        removeBtn.textContent = '×';
+        {
+          const inset = qStageRemoveInsets(itemDim, qPrepStageContentBox(candidate, itemDim));
+          removeBtn.style.right = inset.right + 'px';
+          removeBtn.style.top = inset.top + 'px';
+        }
+        removeBtn.addEventListener('pointerdown', e => e.stopPropagation());
+        removeBtn.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          qPrepReturnToPool(slot.id, item.id);
+        });
+        piece.appendChild(removeBtn);
+
+        piece.addEventListener('pointerdown', e => qPrepStartMoveItem(e, slot.id, item.id, piece));
+        el.appendChild(piece);
+      });
+    }
+
+    el.ondragover = e => {
+      if (!qPrepCanAccept(slot, qPrepCandidateById(qPrepDragCandidateId))) return;
+      e.preventDefault();
+      el.classList.add('can-drop');
+    };
+    el.ondragleave = () => el.classList.remove('can-drop');
+    el.ondrop = e => {
+      e.preventDefault();
+      el.classList.remove('can-drop');
+      qPrepHandleDrop(slot.id, e.dataTransfer.getData('text/plain'), e);
+    };
+
+    layer.appendChild(el);
+  });
+}
+
+function qPrepFitStage() {
+  const shell = document.getElementById('prep-stage-fit');
+  const stage = document.getElementById('prep-stage');
+  if (!(shell && stage)) return;
+
+  const parent = shell.parentElement;
+  const availableWidth = parent ? parent.clientWidth : shell.clientWidth;
+  const scale = availableWidth ? Math.min(1, availableWidth / QPREP_STAGE_SIZE.width) : 1;
+
+  shell.style.height = (QPREP_STAGE_SIZE.height * scale) + 'px';
+  stage.style.width = QPREP_STAGE_SIZE.width + 'px';
+  stage.style.height = QPREP_STAGE_SIZE.height + 'px';
+  stage.style.transform = `scale(${scale})`;
+}
+
+function qPrepHandleResize() {
+  qPrepFitStage();
+  qPrepRenderStage();
+  qPrepRenderPool();
+}
+
+function qPrepReturnToPool(slotId, itemId) {
+  if (!slotId || !itemId) return;
+  qPrepPlacements[slotId] = qPrepGetSlotItems(slotId).filter(item => item.id !== itemId);
+  qPrepRenderPool();
+  qPrepRenderStage();
+}
+
+function qPrepFreezeSlotItems(slotId, slot=null) {
+  const targetSlot = slot || qPrepSlotById(slotId);
+  const items = qPrepGetSlotItems(slotId);
+  if (!(targetSlot && items.length)) return;
+
+  const slotWidth = targetSlot.w || qPrepDim(targetSlot.size);
+  const slotHeight = targetSlot.h || qPrepDim(targetSlot.size);
+  const autoCenters = qPrepAutoCenters(targetSlot, items.length);
+  let autoIndex = 0;
+
+  items.forEach(item => {
+    if (item.manual) return;
+    const candidate = qPrepCandidateById(item.candidateId);
+    if (!candidate) return;
+    const itemDim = qPrepPlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length, targetSlot);
+    const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+    const pos = q3ResolveStageItemPos(item, itemDim, { width:slotWidth, height:slotHeight }, autoPos);
+    item.x = pos.x;
+    item.y = pos.y;
+    item.manual = true;
+    autoIndex += 1;
+  });
+}
+
+function qPrepDropCenterFromEvent(slotId, candidate, event) {
+  const slot = qPrepSlotById(slotId);
+  const slotEl = document.getElementById('prep-slot-' + slotId);
+  if (!(slot && slotEl && event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY))) {
+    return { x:.5, y:.5 };
+  }
+
+  const currentCount = qPrepGetSlotItems(slotId).length + 1;
+  const slotWidth = slot.w || qPrepDim(slot.size);
+  const slotHeight = slot.h || qPrepDim(slot.size);
+  const itemDim = qPrepPlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, currentCount, slot);
+  const rect = slotEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return { x:.5, y:.5 };
+
+  const rawX = (event.clientX - rect.left) / rect.width;
+  const rawY = (event.clientY - rect.top) / rect.height;
+  const minX = itemDim / (slotWidth * 2);
+  const maxX = 1 - minX;
+  const minY = itemDim / (slotHeight * 2);
+  const maxY = 1 - minY;
+  return {
+    x: q3Clamp(rawX, minX, maxX),
+    y: q3Clamp(rawY, minY, maxY),
+  };
+}
+
+function qPrepHandleDrop(slotId, candidateId, event=null) {
+  const slot = qPrepSlotById(slotId);
+  const candidate = qPrepCandidateById(candidateId);
+  if (!qPrepCanAccept(slot, candidate)) return;
+
+  const used = new Set(qPrepCollectUsedCandidateIds());
+  if (used.has(candidateId)) return;
+
+  qPrepFreezeSlotItems(slotId, slot);
+  const dropPos = qPrepDropCenterFromEvent(slotId, candidate, event);
+
+  qPrepGetSlotItems(slotId).push({
+    id: 'prep-stage-item-' + qPrepStageNextId++,
+    candidateId,
+    x: dropPos.x,
+    y: dropPos.y,
+    manual: true,
+    z: ++qPrepStageZCounter,
+  });
+  qPrepRenderPool();
+  qPrepRenderStage();
+}
+
+function qPrepFinishStageMove() {
+  qPrepStageDragState = null;
+  document.removeEventListener('pointermove', qPrepHandleStagePointerMove);
+  document.removeEventListener('pointerup', qPrepHandleStagePointerUp);
+  document.removeEventListener('pointercancel', qPrepHandleStagePointerUp);
+}
+
+function qPrepStartMoveItem(e, slotId, itemId, el) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  if (qPrepStageDragState) qPrepFinishStageMove();
+
+  const slotEl = document.getElementById('prep-slot-' + slotId);
+  const item = qPrepFindStageItem(slotId, itemId);
+  if (!(slotEl && item)) return;
+
+  const rect = el.getBoundingClientRect();
+  item.z = ++qPrepStageZCounter;
+  item.manual = true;
+  el.style.zIndex = item.z;
+
+  qPrepStageDragState = {
+    slotId,
+    itemId,
+    el,
+    width: rect.width,
+    height: rect.height,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+  };
+
+  document.addEventListener('pointermove', qPrepHandleStagePointerMove);
+  document.addEventListener('pointerup', qPrepHandleStagePointerUp);
+  document.addEventListener('pointercancel', qPrepHandleStagePointerUp);
+}
+
+function qPrepHandleStagePointerMove(e) {
+  if (!qPrepStageDragState) return;
+
+  const { slotId, itemId, el, width, height, offsetX, offsetY } = qPrepStageDragState;
+  const slotEl = document.getElementById('prep-slot-' + slotId);
+  const slot = qPrepSlotById(slotId);
+  const item = qPrepFindStageItem(slotId, itemId);
+  if (!(slotEl && slot && item)) return;
+
+  const slotRect = slotEl.getBoundingClientRect();
+  const slotWidth = slot.w || qPrepDim(slot.size);
+  const slotHeight = slot.h || qPrepDim(slot.size);
+  const maxLeftPx = Math.max(0, slotRect.width - width);
+  const maxTopPx = Math.max(0, slotRect.height - height);
+  const leftPx = q3Clamp(e.clientX - slotRect.left - offsetX, 0, maxLeftPx);
+  const topPx = q3Clamp(e.clientY - slotRect.top - offsetY, 0, maxTopPx);
+  const scaleX = slotRect.width ? slotWidth / slotRect.width : 1;
+  const scaleY = slotRect.height ? slotHeight / slotRect.height : 1;
+
+  el.style.left = (leftPx * scaleX) + 'px';
+  el.style.top = (topPx * scaleY) + 'px';
+
+  item.x = q3Clamp((leftPx + width / 2) / slotRect.width, 0, 1);
+  item.y = q3Clamp((topPx + height / 2) / slotRect.height, 0, 1);
+}
+
+function qPrepHandleStagePointerUp() {
+  qPrepFinishStageMove();
+}
+
+function qPrepBuild() {
+  qPrepFinishStageMove();
+  qPrepPlacements = qPrepInitialPlacements();
+  qPrepDragCandidateId = null;
+  qPrepStageNextId = 1;
+  qPrepStageZCounter = 1;
+  qPrepBuilt = true;
+  qPrepRenderAnnotations();
+  qPrepRenderArrows();
+  qPrepRenderStage();
+  qPrepRenderPool();
+  qPrepFitStage();
+
+  if (!qPrepScaleBound) {
+    window.addEventListener('resize', qPrepHandleResize);
+    qPrepScaleBound = true;
+  }
+}
+
+function qPrepReset() {
+  qPrepFinishStageMove();
+  qPrepPlacements = qPrepInitialPlacements();
+  qPrepDragCandidateId = null;
+  qPrepStageNextId = 1;
+  qPrepStageZCounter = 1;
+  if (!qPrepBuilt) return;
+  qPrepBuild();
+}
+
+// ═══════════════════════════════════════════════════
 // TAB
 // ═══════════════════════════════════════════════════
 function switchTab(i) {
   document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',i===j));
   document.querySelectorAll('.tab-pane').forEach((p,j)=>p.classList.toggle('active',i===j));
   if (i === 0) {
-    requestAnimationFrame(q2FlowFitStage);
+    if (!qPrepBuilt) qPrepBuild();
+    requestAnimationFrame(qPrepHandleResize);
   } else if (i === 1) {
+    requestAnimationFrame(q2FlowFitStage);
+  } else if (i === 2) {
     if (!q3Built) q3Build();
     requestAnimationFrame(q3FitStage);
-  } else if (i === 2) {
+  } else if (i === 3) {
     if (!q4FlowBuilt) q4FlowBuild();
     requestAnimationFrame(q4FlowFitStage);
   }
@@ -1371,6 +2169,51 @@ function q2ReturnToPool(slotId, itemId) {
   q2FlowRenderStage();
 }
 
+function q2FreezeSlotItems(slotId, slot=null) {
+  const targetSlot = slot || q2SlotById(slotId);
+  const items = q2GetSlotItems(slotId);
+  if (!(targetSlot && items.length)) return;
+
+  const autoCenters = q3AutoCenters(items.length);
+  let autoIndex = 0;
+  items.forEach(item => {
+    if (item.manual) return;
+    const candidate = q2CandidateById(item.candidateId);
+    if (!candidate) return;
+    const itemDim = q2PlacedItemDim(candidate, Q2_FLOW_SLOT_DIM, items.length);
+    const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+    const pos = q3ResolveStageItemPos(item, itemDim, Q2_FLOW_SLOT_DIM, autoPos);
+    item.x = pos.x;
+    item.y = pos.y;
+    item.manual = true;
+    autoIndex += 1;
+  });
+}
+
+function q2DropCenterFromEvent(slotId, candidate, event) {
+  const slot = q2SlotById(slotId);
+  const slotEl = document.getElementById('q2-slot-' + slotId);
+  if (!(slot && slotEl && event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY))) {
+    return { x:.5, y:.5 };
+  }
+
+  const currentCount = q2GetSlotItems(slotId).length + 1;
+  const itemDim = q2PlacedItemDim(candidate, Q2_FLOW_SLOT_DIM, currentCount);
+  const rect = slotEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return { x:.5, y:.5 };
+
+  const rawX = (event.clientX - rect.left) / rect.width;
+  const rawY = (event.clientY - rect.top) / rect.height;
+  const minX = itemDim / (Q2_FLOW_SLOT_DIM * 2);
+  const maxX = 1 - minX;
+  const minY = itemDim / (Q2_FLOW_SLOT_DIM * 2);
+  const maxY = 1 - minY;
+  return {
+    x: q3Clamp(rawX, minX, maxX),
+    y: q3Clamp(rawY, minY, maxY),
+  };
+}
+
 function q2PoolDisplayScale() {
   const vw = q3ViewportWidth();
   if (vw <= 480) return 0.62;
@@ -1400,17 +2243,17 @@ function q2PoolItemDim(candidate) {
 }
 
 function q2StageScaleFactor(count) {
-  if (count <= 1) return 0.82;
-  if (count === 2) return 0.68;
-  if (count <= 4) return 0.58;
-  if (count <= 6) return 0.46;
-  return 0.38;
+  if (count <= 1) return 0.96;
+  if (count === 2) return 0.82;
+  if (count <= 4) return 0.78;
+  if (count <= 6) return 0.56;
+  return 0.44;
 }
 
 function q2PlacedItemDim(candidate, slotDim, count) {
   const deviceScale = q2StageViewportScale();
   const maxDim = Math.round(
-    slotDim * (count <= 1 ? 0.84 : count === 2 ? 0.74 : count <= 4 ? 0.64 : 0.54) * deviceScale
+    slotDim * (count <= 1 ? 0.96 : count === 2 ? 0.86 : count <= 4 ? 0.86 : 0.66) * deviceScale
   );
   const scaled = Math.round(candidate.poolDim * q2StageScaleFactor(count) * deviceScale);
   return Math.max(16, Math.min(maxDim, scaled));
@@ -1423,6 +2266,25 @@ function q2CandidateNaturalBox(item) {
   if (item.kind === 'barLong') return { width: 10, height: 52 };
   if (item.kind === 'barShort') return { width: 10, height: 32 };
   return { width: item.poolDim || 60, height: item.poolDim || 60 };
+}
+
+function qStageRemoveInsets(containerDim, contentBox) {
+  const contentWidth = Math.min(containerDim, contentBox.width || containerDim);
+  const contentHeight = Math.min(containerDim, contentBox.height || containerDim);
+  return {
+    right: Math.max(-1, Math.round((containerDim - contentWidth) / 2) - 2),
+    top: Math.max(-1, Math.round((containerDim - contentHeight) / 2) - 2),
+  };
+}
+
+function q2StageContentBox(candidate, dim) {
+  const natural = q2CandidateNaturalBox(candidate);
+  const available = Math.max(16, dim - 4);
+  const scale = Math.min(available / natural.width, available / natural.height);
+  return {
+    width: Math.max(12, Math.round(natural.width * scale)),
+    height: Math.max(12, Math.round(natural.height * scale)),
+  };
 }
 
 function q2CandidateSvg(item) {
@@ -1619,6 +2481,11 @@ function q2FlowRenderStage() {
         removeBtn.type = 'button';
         removeBtn.className = 'q3-stage-remove';
         removeBtn.textContent = '×';
+        {
+          const inset = qStageRemoveInsets(itemDim, q2StageContentBox(candidate, itemDim));
+          removeBtn.style.right = inset.right + 'px';
+          removeBtn.style.top = inset.top + 'px';
+        }
         removeBtn.addEventListener('pointerdown', e => e.stopPropagation());
         removeBtn.addEventListener('click', e => {
           e.preventDefault();
@@ -1641,7 +2508,7 @@ function q2FlowRenderStage() {
     el.ondrop = e => {
       e.preventDefault();
       el.classList.remove('can-drop');
-      q2HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
+      q2HandleDrop(slot.id, e.dataTransfer.getData('text/plain'), e);
     };
 
     layer.appendChild(el);
@@ -1661,7 +2528,7 @@ function q2FlowFitStage() {
   stage.style.transform = `scale(${scale})`;
 }
 
-function q2HandleDrop(slotId, candidateId) {
+function q2HandleDrop(slotId, candidateId, event=null) {
   const slot = q2SlotById(slotId);
   const candidate = q2CandidateById(candidateId);
   if (!slot || !candidate) return;
@@ -1670,12 +2537,15 @@ function q2HandleDrop(slotId, candidateId) {
   const used = new Set(q2CollectUsedCandidateIds());
   if (used.has(candidateId)) return;
 
+  q2FreezeSlotItems(slotId, slot);
+  const dropPos = q2DropCenterFromEvent(slotId, candidate, event);
+
   q2GetSlotItems(slotId).push({
     id: 'q2-stage-item-' + q2StageNextId++,
     candidateId,
-    x: .5,
-    y: .5,
-    manual: false,
+    x: dropPos.x,
+    y: dropPos.y,
+    manual: true,
     z: ++q2StageZCounter,
   });
   q2RenderPool();
@@ -2680,9 +3550,11 @@ function q3PlacedItemDim(candidate, slotDim, count) {
 function q3ResolveStageItemPos(item, itemDim, slotDim, autoPos) {
   const slotWidth = typeof slotDim === 'number' ? slotDim : (slotDim.width || slotDim.w || 74);
   const slotHeight = typeof slotDim === 'number' ? slotDim : (slotDim.height || slotDim.h || slotWidth);
-  const minX = itemDim / (slotWidth * 2);
+  const itemWidth = typeof itemDim === 'number' ? itemDim : (itemDim.width || itemDim.w || 74);
+  const itemHeight = typeof itemDim === 'number' ? itemDim : (itemDim.height || itemDim.h || itemWidth);
+  const minX = itemWidth / (slotWidth * 2);
   const maxX = 1 - minX;
-  const minY = itemDim / (slotHeight * 2);
+  const minY = itemHeight / (slotHeight * 2);
   const maxY = 1 - minY;
   const centerX = item.manual ? (item.x ?? .5) : autoPos.x;
   const centerY = item.manual ? (item.y ?? .5) : autoPos.y;
@@ -2691,8 +3563,8 @@ function q3ResolveStageItemPos(item, itemDim, slotDim, autoPos) {
   return {
     x,
     y,
-    left: x * slotWidth - itemDim / 2,
-    top: y * slotHeight - itemDim / 2,
+    left: x * slotWidth - itemWidth / 2,
+    top: y * slotHeight - itemHeight / 2,
   };
 }
 
@@ -3159,6 +4031,53 @@ function q3CreateCandidateVisual(candidate, dim, mode='pool') {
   return outer;
 }
 
+function q3StageContentBox(candidate, dim) {
+  const layout = Q3_POOL_LAYOUTS[candidate.kind] || null;
+  if (layout) {
+    const boardWidth = layout.width || 120;
+    const boardHeight = layout.height || 56;
+    const scale = Math.min(dim / boardWidth, dim / boardHeight);
+    return {
+      width: Math.max(12, Math.round(boardWidth * scale)),
+      height: Math.max(12, Math.round(boardHeight * scale)),
+    };
+  }
+  return {
+    width: dim,
+    height: Math.max(12, Math.round(dim * (88 / 112))),
+  };
+}
+
+function q3CreatePlacedStageVisual(candidate, contentBox) {
+  const spec = Q3_VISUAL_LIBRARY[candidate.kind];
+  const layout = Q3_POOL_LAYOUTS[candidate.kind] || null;
+  const outer = document.createElement('div');
+  outer.className = 'q3-visual q3-visual-stage';
+  outer.style.width = contentBox.width + 'px';
+  outer.style.height = contentBox.height + 'px';
+
+  if (!spec) return outer;
+
+  const boardWidth = layout ? (layout.width || 120) : 112;
+  const boardHeight = layout ? (layout.height || 56) : 88;
+  const chroms = layout ? (layout.chroms || []) : (spec.chroms || []);
+  const scale = Math.min(contentBox.width / boardWidth, contentBox.height / boardHeight);
+
+  const artboard = document.createElement('div');
+  artboard.className = 'q3-visual-artboard';
+  artboard.style.width = boardWidth + 'px';
+  artboard.style.height = boardHeight + 'px';
+  artboard.style.position = 'absolute';
+  artboard.style.left = '50%';
+  artboard.style.top = '50%';
+  artboard.style.transformOrigin = 'center center';
+  artboard.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+  chroms.forEach(item => artboard.appendChild(q3CreateDiagramChromosome(item, 'pool')));
+  outer.appendChild(artboard);
+  return outer;
+}
+
 function q3CreateGourdSlotShape() {
   const wrap = document.createElement('div');
   wrap.className = 'q3-slot-shape';
@@ -3185,11 +4104,11 @@ function q3RenderAnnotations() {
   annos.innerHTML = `
     <div class="q3-stage-anno big center" style="left:180px;top:238px;width:122px;">前期</div>
     <div class="q3-stage-anno big center" style="left:430px;top:238px;width:122px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:680px;top:264px;width:150px;">后期</div>
+    <div class="q3-stage-anno big center" style="left:680px;top:238px;width:150px;">后期</div>
 
     <div class="q3-stage-anno big center" style="left:180px;top:488px;width:122px;">前期</div>
     <div class="q3-stage-anno big center" style="left:430px;top:488px;width:122px;">中期</div>
-    <div class="q3-stage-anno big center" style="left:680px;top:514px;width:150px;">后期</div>
+    <div class="q3-stage-anno big center" style="left:680px;top:488px;width:150px;">后期</div>
     <div class="q3-stage-bracket-h" style="left:250px;top:532px;width:580px;"></div>
     <div class="q3-stage-anno center" style="left:433px;top:546px;width:214px;font-size:22px;font-weight:800;color:#dc2626;">减数分裂II</div>
 
@@ -3262,6 +4181,64 @@ function q3ReturnToPool(slotId, itemId) {
   q3RenderStage();
 }
 
+function q3FreezeSlotItems(slotId, slot=null) {
+  const targetSlot = slot || q3SlotById(slotId);
+  const items = q3GetSlotItems(slotId);
+  if (!(targetSlot && items.length)) return;
+
+  const slotWidth = targetSlot.w || q3Dim(targetSlot.size);
+  const slotHeight = targetSlot.h || q3Dim(targetSlot.size);
+  const autoCenters = q3AutoCenters(items.length);
+  let autoIndex = 0;
+
+  items.forEach(item => {
+    if (item.manual) return;
+    const candidate = q3CandidateById(item.candidateId);
+    if (!candidate) return;
+    const itemDim = q3PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length);
+    const contentBox = q3StageContentBox(candidate, itemDim);
+    const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+    const pos = q3ResolveStageItemPos(item, { width:contentBox.width, height:contentBox.height }, { width:slotWidth, height:slotHeight }, autoPos);
+    item.x = pos.x;
+    item.y = pos.y;
+    item.manual = true;
+    autoIndex += 1;
+  });
+}
+
+function q3FreezeAllStageItems() {
+  Q3_STAGE_SLOTS.forEach(slot => {
+    if (!q3SlotIsPreset(slot.id)) q3FreezeSlotItems(slot.id, slot);
+  });
+}
+
+function q3DropCenterFromEvent(slotId, candidate, event) {
+  const slot = q3SlotById(slotId);
+  const slotEl = document.getElementById('q3-slot-' + slotId);
+  if (!(slot && slotEl && event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY))) {
+    return { x:.5, y:.5 };
+  }
+
+  const currentCount = q3GetSlotItems(slotId).length + 1;
+  const slotWidth = slot.w || q3Dim(slot.size);
+  const slotHeight = slot.h || q3Dim(slot.size);
+  const itemDim = q3PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, currentCount);
+  const contentBox = q3StageContentBox(candidate, itemDim);
+  const rect = slotEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return { x:.5, y:.5 };
+
+  const rawX = (event.clientX - rect.left) / rect.width;
+  const rawY = (event.clientY - rect.top) / rect.height;
+  const minX = contentBox.width / (slotWidth * 2);
+  const maxX = 1 - minX;
+  const minY = contentBox.height / (slotHeight * 2);
+  const maxY = 1 - minY;
+  return {
+    x: q3Clamp(rawX, minX, maxX),
+    y: q3Clamp(rawY, minY, maxY),
+  };
+}
+
 function q3RenderStage() {
   const layer = document.getElementById('q3-stage-layer');
   if (!layer) return;
@@ -3311,21 +4288,22 @@ function q3RenderStage() {
           if (!candidate) return;
 
           const itemDim = q3PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length);
+          const contentBox = q3StageContentBox(candidate, itemDim);
           const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
-          const pos = q3ResolveStageItemPos(item, itemDim, { width:slotWidth, height:slotHeight }, autoPos);
+          const pos = q3ResolveStageItemPos(item, { width:contentBox.width, height:contentBox.height }, { width:slotWidth, height:slotHeight }, autoPos);
           if (!item.manual) autoIndex += 1;
 
           const piece = document.createElement('div');
           piece.className = 'q3-stage-item';
           piece.dataset.slotId = slot.id;
           piece.dataset.itemId = item.id;
-          piece.style.width = itemDim + 'px';
-          piece.style.height = itemDim + 'px';
+          piece.style.width = contentBox.width + 'px';
+          piece.style.height = contentBox.height + 'px';
           piece.style.left = pos.left + 'px';
           piece.style.top = pos.top + 'px';
           piece.style.zIndex = item.z;
 
-          const visual = q3CreateCandidateVisual(candidate, itemDim, 'pool');
+          const visual = q3CreatePlacedStageVisual(candidate, contentBox);
           visual.style.pointerEvents = 'none';
           piece.appendChild(visual);
 
@@ -3333,6 +4311,11 @@ function q3RenderStage() {
           removeBtn.type = 'button';
           removeBtn.className = 'q3-stage-remove';
           removeBtn.textContent = '×';
+          {
+            const inset = qStageRemoveInsets(Math.max(contentBox.width, contentBox.height), contentBox);
+            removeBtn.style.right = inset.right + 'px';
+            removeBtn.style.top = inset.top + 'px';
+          }
           removeBtn.addEventListener('pointerdown', e => e.stopPropagation());
           removeBtn.addEventListener('click', e => {
             e.preventDefault();
@@ -3355,7 +4338,7 @@ function q3RenderStage() {
       el.ondrop = e => {
         e.preventDefault();
         el.classList.remove('can-drop');
-        q3HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
+        q3HandleDrop(slot.id, e.dataTransfer.getData('text/plain'), e);
       };
 
       layer.appendChild(el);
@@ -3400,7 +4383,7 @@ function q3FlashSlotState(slotId, type) {
   setTimeout(() => el.classList.remove(type), type === 'correct' ? 650 : 450);
 }
 
-function q3HandleDrop(slotId, candidateId) {
+function q3HandleDrop(slotId, candidateId, event=null) {
   const slot = q3SlotById(slotId);
   const candidate = q3CandidateById(candidateId);
   if (!slot || !candidate) return;
@@ -3409,12 +4392,15 @@ function q3HandleDrop(slotId, candidateId) {
   const used = new Set(q3CollectUsedCandidateIds());
   if (used.has(candidateId)) return;
 
+  q3FreezeAllStageItems();
+  const dropPos = q3DropCenterFromEvent(slotId, candidate, event);
+
   q3GetSlotItems(slotId).push({
     id: 'q3-stage-item-' + q3StageNextId++,
     candidateId,
-    x: .5,
-    y: .5,
-    manual: false,
+    x: dropPos.x,
+    y: dropPos.y,
+    manual: true,
     z: ++q3StageZCounter,
   });
   clrFB('q3-fb');
@@ -3457,7 +4443,7 @@ function q3Reset() {
   q3Build();
 }
 
-function fullReset() { q2Reset(); q3Reset(); q4FlowReset(); switchTab(0); }
+function fullReset() { qPrepReset(); q2Reset(); q3Reset(); q4FlowReset(); switchTab(0); }
 
 
 // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// INQUIRY 4 鈥?same as inquiry 3 but with red/blue color distinction
@@ -3836,6 +4822,56 @@ function q4ReturnToPool(slotId, itemId) {
   q4FlowRenderStage();
 }
 
+function q4FreezeSlotItems(slotId, slot=null) {
+  const targetSlot = slot || q4SlotById(slotId);
+  const items = q4GetSlotItems(slotId);
+  if (!(targetSlot && items.length)) return;
+
+  const slotWidth = targetSlot.w || q4FlowDim(targetSlot.size);
+  const slotHeight = targetSlot.h || q4FlowDim(targetSlot.size);
+  const autoCenters = q3AutoCenters(items.length);
+  let autoIndex = 0;
+
+  items.forEach(item => {
+    if (item.manual) return;
+    const candidate = q4CandidateById(item.candidateId);
+    if (!candidate) return;
+    const itemDim = q4PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, items.length);
+    const autoPos = autoCenters[autoIndex] || { x:.5, y:.5 };
+    const pos = q3ResolveStageItemPos(item, itemDim, { width:slotWidth, height:slotHeight }, autoPos);
+    item.x = pos.x;
+    item.y = pos.y;
+    item.manual = true;
+    autoIndex += 1;
+  });
+}
+
+function q4DropCenterFromEvent(slotId, candidate, event) {
+  const slot = q4SlotById(slotId);
+  const slotEl = document.getElementById('q4-slot-' + slotId);
+  if (!(slot && slotEl && event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY))) {
+    return { x:.5, y:.5 };
+  }
+
+  const currentCount = q4GetSlotItems(slotId).length + 1;
+  const slotWidth = slot.w || q4FlowDim(slot.size);
+  const slotHeight = slot.h || q4FlowDim(slot.size);
+  const itemDim = q4PlacedItemDim(candidate, { width:slotWidth, height:slotHeight }, currentCount);
+  const rect = slotEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return { x:.5, y:.5 };
+
+  const rawX = (event.clientX - rect.left) / rect.width;
+  const rawY = (event.clientY - rect.top) / rect.height;
+  const minX = itemDim / (slotWidth * 2);
+  const maxX = 1 - minX;
+  const minY = itemDim / (slotHeight * 2);
+  const maxY = 1 - minY;
+  return {
+    x: q3Clamp(rawX, minX, maxX),
+    y: q3Clamp(rawY, minY, maxY),
+  };
+}
+
 function q4FlowPlaceSvg(board, svg, opts) {
   const wrap = document.createElement('div');
   const scale = opts.scale == null ? 1 : opts.scale;
@@ -4058,6 +5094,16 @@ function q4CandidateNaturalBox(item) {
   return { width: item.poolDim || 72, height: item.poolDim || 72 };
 }
 
+function q4StageContentBox(candidate, dim) {
+  const natural = q4CandidateNaturalBox(candidate);
+  const available = Math.max(16, dim - 4);
+  const scale = Math.min(available / natural.width, available / natural.height);
+  return {
+    width: Math.max(12, Math.round(natural.width * scale)),
+    height: Math.max(12, Math.round(natural.height * scale)),
+  };
+}
+
 function q4CandidateSvg(item) {
   if (item.shape === 'cross') {
     return q3PoolChromSVG(item.variant || 'small', item.col);
@@ -4255,6 +5301,11 @@ function q4FlowRenderStage() {
         removeBtn.type = 'button';
         removeBtn.className = 'q3-stage-remove';
         removeBtn.textContent = '×';
+        {
+          const inset = qStageRemoveInsets(itemDim, q4StageContentBox(candidate, itemDim));
+          removeBtn.style.right = inset.right + 'px';
+          removeBtn.style.top = inset.top + 'px';
+        }
         removeBtn.addEventListener('pointerdown', e => e.stopPropagation());
         removeBtn.addEventListener('click', e => {
           e.preventDefault();
@@ -4277,7 +5328,7 @@ function q4FlowRenderStage() {
     el.ondrop = e => {
       e.preventDefault();
       el.classList.remove('can-drop');
-      q4HandleDrop(slot.id, e.dataTransfer.getData('text/plain'));
+      q4HandleDrop(slot.id, e.dataTransfer.getData('text/plain'), e);
     };
 
     layer.appendChild(el);
@@ -4297,7 +5348,7 @@ function q4FlowFitStage() {
   stage.style.transform = `scale(${scale})`;
 }
 
-function q4HandleDrop(slotId, candidateId) {
+function q4HandleDrop(slotId, candidateId, event=null) {
   const slot = q4SlotById(slotId);
   const candidate = q4CandidateById(candidateId);
   if (!slot || !candidate) return;
@@ -4306,12 +5357,15 @@ function q4HandleDrop(slotId, candidateId) {
   const used = new Set(q4CollectUsedCandidateIds());
   if (used.has(candidateId)) return;
 
+  q4FreezeSlotItems(slotId, slot);
+  const dropPos = q4DropCenterFromEvent(slotId, candidate, event);
+
   q4GetSlotItems(slotId).push({
     id: 'q4-stage-item-' + q4StageNextId++,
     candidateId,
-    x: .5,
-    y: .5,
-    manual: false,
+    x: dropPos.x,
+    y: dropPos.y,
+    manual: true,
     z: ++q4StageZCounter,
   });
   q4RenderPool();
@@ -4409,6 +5463,7 @@ function q4FlowReset() {
 }
 
 // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// INIT
+qPrepBuild();
 q2Build();
 
 // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?// TOUCH SUPPORT 鈥?makes drag-and-drop work on tablets (iOS/Android)
@@ -4438,6 +5493,10 @@ q2Build();
 
   function isQ4PoolDrag(el) {
     return !!(el && el.classList && el.classList.contains('q4-pool-item'));
+  }
+
+  function isPrepPoolDrag(el) {
+    return !!(el && el.classList && el.classList.contains('prep-pool-item'));
   }
 
   function activeTouchVisual() {
@@ -4530,6 +5589,9 @@ q2Build();
       if (isQ4PoolDrag(dragEl) && typeof q4DragCandidateId !== 'undefined') {
         q4DragCandidateId = dragId;
       }
+      if (isPrepPoolDrag(dragEl) && typeof qPrepDragCandidateId !== 'undefined') {
+        qPrepDragCandidateId = dragId;
+      }
       pendingTouch = null;
       pendingTimer = null;
     }, Q3_HOLD_MS);
@@ -4539,9 +5601,11 @@ q2Build();
   function startDirectTouchDrag(el, touch) {
     const rect = el.getBoundingClientRect();
     const computed = window.getComputedStyle(el);
-    const shrinkForTouch = isQ2PoolDrag(el) || isQ3PoolDrag(el) || isQ4PoolDrag(el);
+    const shrinkForTouch = isQ2PoolDrag(el) || isQ3PoolDrag(el) || isQ4PoolDrag(el) || isPrepPoolDrag(el);
     const dragScale = isQ2PoolDrag(el)
       ? q2TouchDragScale()
+      : isPrepPoolDrag(el)
+      ? qPrepTouchDragScale()
       : isQ4PoolDrag(el)
       ? q4TouchDragScale()
       : (shrinkForTouch ? q3TouchDragScale() : 1);
@@ -4660,6 +5724,9 @@ q2Build();
     if (typeof q4DragCandidateId !== 'undefined') {
       q4DragCandidateId = null;
     }
+    if (typeof qPrepDragCandidateId !== 'undefined') {
+      qPrepDragCandidateId = null;
+    }
     if (typeof q2ClearDropHighlights === 'function') {
       q2ClearDropHighlights();
     }
@@ -4668,6 +5735,9 @@ q2Build();
     }
     if (typeof q4ClearDropHighlights === 'function') {
       q4ClearDropHighlights();
+    }
+    if (typeof qPrepClearDropHighlights === 'function') {
+      qPrepClearDropHighlights();
     }
     dragEl = null;
     dragId = null;
@@ -4707,7 +5777,7 @@ q2Build();
     const el = findDraggable(document.elementFromPoint(touch.clientX, touch.clientY));
     if (!el) return;
 
-    if (isQ2PoolDrag(el) || isQ3PoolDrag(el) || isQ4PoolDrag(el)) {
+    if (isQ2PoolDrag(el) || isQ3PoolDrag(el) || isQ4PoolDrag(el) || isPrepPoolDrag(el)) {
       queuePendingQ3Drag(el, touch);
       return;
     }
@@ -4766,7 +5836,9 @@ q2Build();
     if (didDrop) {
       const syntheticEvent = {
         preventDefault: () => {},
-        dataTransfer: { getData: (type) => dragId }
+        dataTransfer: { getData: (type) => dragId },
+        clientX: touch.clientX,
+        clientY: touch.clientY,
       };
       dropTarget.ondrop(syntheticEvent);
     }
